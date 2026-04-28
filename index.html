@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔍 Aventura de Búsqueda: Lineal vs Binaria</title>
+    <title>🔍 Búsqueda Lineal vs Binaria - Sin Pistas</title>
     <style>
-        /* Estilos generales con temática de juego */
         :root {
             --bg: #1a1a2e;
             --card: #16213e;
@@ -42,7 +41,7 @@
             background: var(--card);
             border-radius: 28px;
             padding: 20px 25px 30px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 2px var(--border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 0 2px var(--border);
             position: relative;
             overflow: hidden;
         }
@@ -56,8 +55,14 @@
             height: 150px;
             background: var(--secondary);
             border-radius: 50%;
-            opacity: 0.1;
+            opacity: 0.08;
             pointer-events: none;
+            z-index: 0;
+        }
+
+        .game-container>* {
+            position: relative;
+            z-index: 1;
         }
 
         h1 {
@@ -123,7 +128,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0, 0, 0, 0.4);
             border-radius: 60px;
             padding: 12px 22px;
             margin-bottom: 20px;
@@ -147,7 +152,7 @@
         }
 
         .game-area {
-            background: rgba(0,0,0,0.3);
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 24px;
             padding: 25px 20px;
             margin-bottom: 20px;
@@ -174,7 +179,7 @@
         }
         .range-display.highlight {
             border-color: var(--accent);
-            box-shadow: 0 0 30px rgba(245,197,24,0.4);
+            box-shadow: 0 0 30px rgba(245, 197, 24, 0.4);
             animation: pulse 1s infinite;
         }
         @keyframes pulse {
@@ -209,7 +214,7 @@
         }
         .guess-input-area input:focus {
             border-color: var(--secondary);
-            box-shadow: 0 0 20px rgba(233,68,96,0.5);
+            box-shadow: 0 0 20px rgba(233, 68, 96, 0.5);
         }
         .guess-btn {
             background: var(--secondary);
@@ -223,12 +228,36 @@
             letter-spacing: 1px;
             transition: all 0.3s;
         }
-        .guess-btn:hover {
+        .guess-btn:hover:not(:disabled) {
             background: #ff5a7a;
             transform: scale(1.05);
         }
         .guess-btn:disabled {
             background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auto-btn {
+            background: #ff8c00;
+            border: none;
+            color: #000;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 12px 22px;
+            border-radius: 40px;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            margin-top: 5px;
+        }
+        .auto-btn:hover:not(:disabled) {
+            background: #ffaa33;
+            transform: scale(1.04);
+        }
+        .auto-btn:disabled {
+            background: #555;
+            color: #999;
             cursor: not-allowed;
             transform: none;
         }
@@ -240,16 +269,16 @@
             text-align: center;
             transition: 0.2s;
         }
-        .feedback-too-high {
+        .feedback-no {
             color: #ff6b6b;
         }
-        .feedback-too-low {
-            color: #4ecdc4;
-        }
-        .feedback-correct {
+        .feedback-si {
             color: var(--correct);
             font-size: 1.5rem;
             animation: bounce 0.5s;
+        }
+        .feedback-info {
+            color: #4ecdc4;
         }
         @keyframes bounce {
             0%,
@@ -270,20 +299,26 @@
             width: 100%;
             border: 1px solid #333;
             font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             margin-top: 10px;
         }
         .log-entry {
-            padding: 4px 0;
+            padding: 3px 0;
             border-bottom: 1px solid #222;
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .log-attempt {
-            color: #aaa;
+            color: #ccc;
         }
         .log-discard {
             color: var(--accent);
+            font-weight: bold;
+        }
+        .log-hit {
+            color: var(--correct);
             font-weight: bold;
         }
 
@@ -341,6 +376,7 @@
             padding: 10px 18px;
             text-align: center;
             border: 1px solid var(--border);
+            min-width: 130px;
         }
         .score-card .label {
             font-size: 0.8rem;
@@ -357,9 +393,46 @@
         .rules-hint {
             text-align: center;
             font-size: 0.85rem;
-            opacity: 0.7;
+            opacity: 0.85;
             margin-top: 8px;
             font-style: italic;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 10px 15px;
+            line-height: 1.5;
+        }
+
+        .progress-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            margin-top: 10px;
+            max-width: 600px;
+        }
+        .grid-cell {
+            width: 28px;
+            height: 28px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            background: #222;
+            color: #888;
+            transition: 0.2s;
+            border: 1px solid #444;
+        }
+        .grid-cell.checked {
+            background: #333;
+            color: #ccc;
+        }
+        .grid-cell.found {
+            background: var(--correct);
+            color: #fff;
+            font-weight: bold;
+            animation: bounce 0.5s;
+            border-color: #fff;
         }
 
         @media (max-width: 550px) {
@@ -369,16 +442,23 @@
             .game-area {
                 padding: 15px;
             }
-            .guess-input-area input {
-                width: 130px;
+            .range-display {
+                font-size: 1.3rem;
+                min-width: 150px;
+                padding: 12px 18px;
+            }
+            .grid-cell {
+                width: 22px;
+                height: 22px;
+                font-size: 0.6rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <h1>🔍 Aventura de Búsqueda</h1>
-        <p class="subtitle">Búsqueda Lineal vs Búsqueda Binaria</p>
+        <h1>🔍 Búsqueda Lineal vs Binaria</h1>
+        <p class="subtitle">Experimenta la diferencia: sin pistas vs. descartando mitades</p>
 
         <!-- Selector de modo -->
         <div class="mode-selector">
@@ -390,22 +470,26 @@
             </button>
         </div>
 
-        <!-- Estadísticas superiores -->
+        <!-- Estadísticas -->
         <div class="stats-bar">
             <div class="stat-item"><span class="stat-icon">🎯</span> Ronda <span class="stat-value" id="rondaNum">1</span>/5</div>
             <div class="stat-item"><span class="stat-icon">❓</span> Intentos <span class="stat-value" id="intentosCount">0</span></div>
             <div class="stat-item"><span class="stat-icon">⏱️</span> <span class="stat-value" id="timerDisplay">00:00</span></div>
         </div>
 
-        <!-- Área de juego principal -->
+        <!-- Área de juego -->
         <div class="game-area" id="gameArea">
-            <div style="font-size:1rem; opacity:0.8;">🤖 La máquina ha pensado un número secreto</div>
+            <div style="font-size:1rem; opacity:0.8;">🤖 La máquina ha pensado un número secreto (1–100)</div>
             <div class="range-display" id="rangeDisplay">1 – 100</div>
 
+            <!-- Cuadrícula de progreso para modo lineal -->
+            <div class="progress-grid" id="progressGrid" style="display: none;"></div>
+
             <div class="guess-input-area" id="guessArea">
-                <input type="number" id="guessInput" placeholder="Tu número..." min="1" max="100">
-                <button class="guess-btn" id="guessBtn">🔎 Probar</button>
+                <input type="number" id="guessInput" placeholder="Tu intento..." min="1" max="100">
+                <button class="guess-btn" id="guessBtn">🔎 Intentar</button>
             </div>
+            <button class="auto-btn" id="autoLinearBtn" style="display: none;">⚡ Simular búsqueda lineal completa</button>
 
             <div class="feedback-message" id="feedbackMsg"></div>
 
@@ -415,7 +499,7 @@
             </div>
         </div>
 
-        <!-- Pantalla de resultado (oculta hasta encontrar) -->
+        <!-- Pantalla de resultado -->
         <div class="result-screen" id="resultScreen">
             <div>🎉 ¡Número encontrado!</div>
             <div class="result-score" id="resultScore"></div>
@@ -423,29 +507,30 @@
             <button class="new-game-btn" id="newRoundBtn">▶️ Siguiente ronda</button>
         </div>
 
-        <!-- Puntuaciones acumuladas -->
+        <!-- Puntuaciones -->
         <div class="scoreboard">
             <div class="score-card">
-                <div class="label">🐢 Lineal (total intentos)</div>
+                <div class="label">🐢 Lineal (total)</div>
                 <div class="number" id="scoreLineal">0</div>
             </div>
             <div class="score-card">
-                <div class="label">🐇 Binaria (total intentos)</div>
+                <div class="label">🐇 Binaria (total)</div>
                 <div class="number" id="scoreBinaria">0</div>
             </div>
         </div>
         <div class="rules-hint" id="rulesHint">
-            💡 Modo Lineal: pregunta "¿Es el número X?" uno por uno.<br>
-            💡 Modo Binario: pregunta "¿Es mayor que X?" y descarta mitades.
+            💡 <strong>Modo Lineal:</strong> Pregunta "¿Es el número X?". La máquina solo responde <strong>SÍ</strong> o <strong>NO</strong>. Sin pistas de "mayor/menor".<br>
+            💡 <strong>Modo Binario:</strong> Pregunta "¿Es mayor que X?" y descarta mitades del rango.
         </div>
     </div>
 
     <script>
         (function() {
-            // --- Estado del juego ---
+            // --- Estado ---
             const TOTAL_ROUNDS = 5;
-            let currentMode = 'lineal'; // 'lineal' o 'binaria'
-            let rondaActual = 0; // 0..TOTAL_ROUNDS-1 para lineal, luego se reinicia para binaria
+            let currentMode = 'lineal';
+            let rondaLinealCompletadas = 0;
+            let rondaBinariaCompletadas = 0;
             let intentosRonda = 0;
             let secretNumber = null;
             let timerInterval = null;
@@ -453,14 +538,12 @@
             let rondaTerminada = false;
             let rangoMin = 1;
             let rangoMax = 100;
-
-            // Acumuladores por tipo de búsqueda
             let totalIntentosLineal = 0;
             let totalIntentosBinaria = 0;
-            let rondaLinealCompletadas = 0;
-            let rondaBinariaCompletadas = 0;
+            let checkedNumbers = new Set(); // Para modo lineal: números ya probados
+            let autoLinearActive = false; // Para evitar doble simulación
 
-            // Referencias DOM
+            // DOM
             const btnLineal = document.getElementById('btnLineal');
             const btnBinaria = document.getElementById('btnBinaria');
             const rondaNumEl = document.getElementById('rondaNum');
@@ -469,6 +552,7 @@
             const rangeDisplayEl = document.getElementById('rangeDisplay');
             const guessInput = document.getElementById('guessInput');
             const guessBtn = document.getElementById('guessBtn');
+            const autoLinearBtn = document.getElementById('autoLinearBtn');
             const feedbackMsgEl = document.getElementById('feedbackMsg');
             const logPanel = document.getElementById('logPanel');
             const resultScreen = document.getElementById('resultScreen');
@@ -480,6 +564,7 @@
             const rulesHint = document.getElementById('rulesHint');
             const gameArea = document.getElementById('gameArea');
             const guessArea = document.getElementById('guessArea');
+            const progressGrid = document.getElementById('progressGrid');
 
             // --- Utilidades ---
             function formatTime(sec) {
@@ -499,7 +584,7 @@
             }
 
             function stopTimer() {
-                clearInterval(timerInterval);
+                if (timerInterval) clearInterval(timerInterval);
                 timerInterval = null;
             }
 
@@ -508,8 +593,7 @@
             }
 
             function addLogEntry(message, type = 'attempt') {
-                if (logPanel.querySelector('div[style]') && logPanel.children.length === 1 &&
-                    logPanel.children[0].textContent.includes('vacío')) {
+                if (logPanel.children.length === 1 && logPanel.children[0].textContent.includes('vacío')) {
                     logPanel.innerHTML = '';
                 }
                 const entryDiv = document.createElement('div');
@@ -517,6 +601,7 @@
                 const span = document.createElement('span');
                 span.textContent = message;
                 if (type === 'discard') span.className = 'log-discard';
+                else if (type === 'hit') span.className = 'log-hit';
                 else span.className = 'log-attempt';
                 entryDiv.appendChild(span);
                 logPanel.appendChild(entryDiv);
@@ -530,27 +615,60 @@
 
             function updateRondaDisplay() {
                 if (currentMode === 'lineal') {
-                    rondaNumEl.textContent = `${rondaLinealCompletadas + 1}/${TOTAL_ROUNDS}`;
+                    rondaNumEl.textContent = `${Math.min(rondaLinealCompletadas + 1, TOTAL_ROUNDS)}/${TOTAL_ROUNDS}`;
                 } else {
-                    rondaNumEl.textContent = `${rondaBinariaCompletadas + 1}/${TOTAL_ROUNDS}`;
+                    rondaNumEl.textContent = `${Math.min(rondaBinariaCompletadas + 1, TOTAL_ROUNDS)}/${TOTAL_ROUNDS}`;
                 }
             }
 
-            // --- Generar número secreto ---
-            function generarNuevoSecreto() {
-                secretNumber = Math.floor(Math.random() * 100) + 1;
-                console.log('Número secreto (debug):', secretNumber); // Para que el profesor pueda verificar si quiere
+            // --- Construir cuadrícula de progreso (modo lineal) ---
+            function buildProgressGrid() {
+                progressGrid.innerHTML = '';
+                for (let i = 1; i <= 100; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.textContent = i;
+                    cell.id = `grid-${i}`;
+                    progressGrid.appendChild(cell);
+                }
             }
 
-            // --- Reset para nueva ronda ---
+            function updateProgressGrid(number, found = false) {
+                const cell = document.getElementById(`grid-${number}`);
+                if (!cell) return;
+                if (found) {
+                    cell.classList.add('found');
+                } else {
+                    cell.classList.add('checked');
+                }
+            }
+
+            function resetProgressGrid() {
+                const cells = progressGrid.querySelectorAll('.grid-cell');
+                cells.forEach(c => {
+                    c.classList.remove('checked', 'found');
+                });
+            }
+
+            // --- Generar secreto ---
+            function generarNuevoSecreto() {
+                secretNumber = Math.floor(Math.random() * 100) + 1;
+                // Para depuración del profesor (visible en consola F12):
+                console.log(`[DEBUG] Modo: ${currentMode} | Número secreto: ${secretNumber}`);
+            }
+
+            // --- Preparar ronda ---
             function prepararNuevaRonda() {
                 stopTimer();
+                autoLinearActive = false;
                 generarNuevoSecreto();
                 intentosRonda = 0;
                 intentosCountEl.textContent = '0';
                 rondaTerminada = false;
                 rangoMin = 1;
                 rangoMax = 100;
+                checkedNumbers = new Set();
+                resetProgressGrid();
                 rangeDisplayEl.textContent = '1 – 100';
                 rangeDisplayEl.classList.remove('highlight');
                 feedbackMsgEl.textContent = '';
@@ -566,24 +684,30 @@
                 updateRondaDisplay();
                 startTimer();
 
-                if (currentMode === 'binaria') {
-                    rulesHint.innerHTML =
-                        '💡 <strong>Modo Binario:</strong> Pregunta "¿Es mayor que X?" y descarta mitades.<br>Ej: Si dices 50 y es "demasiado bajo", el rango será 51–100.';
-                    guessInput.placeholder = 'Preguntar "mayor que..."';
-                    guessInput.min = rangoMin;
-                    guessInput.max = rangoMax;
-                } else {
-                    rulesHint.innerHTML =
-                        '💡 <strong>Modo Lineal:</strong> Intenta adivinar el número exacto uno por uno.<br>La máquina te dirá si es "demasiado alto" o "demasiado bajo".';
+                if (currentMode === 'lineal') {
+                    progressGrid.style.display = 'flex';
+                    autoLinearBtn.style.display = 'inline-block';
+                    autoLinearBtn.disabled = false;
                     guessInput.placeholder = 'Adivina un número...';
                     guessInput.min = 1;
                     guessInput.max = 100;
+                    rulesHint.innerHTML =
+                        '💡 <strong>Modo Lineal REAL:</strong> Pregunta "¿Es el número X?".<br>La máquina solo responde <strong style="color:#2ecc71;">SÍ</strong> (acertaste) o <strong style="color:#e74c3c;">NO</strong> (fallaste). <strong>No hay pistas</strong> de mayor/menor.<br>Debes probar uno por uno hasta encontrarlo.';
+                } else {
+                    progressGrid.style.display = 'none';
+                    autoLinearBtn.style.display = 'none';
+                    guessInput.placeholder = 'Preguntar "mayor que..."';
+                    guessInput.min = rangoMin;
+                    guessInput.max = rangoMax;
+                    rulesHint.innerHTML =
+                        '💡 <strong>Modo Binario:</strong> Pregunta "¿Es mayor que X?".<br>La máquina dice <strong>SÍ</strong> o <strong>NO</strong> y descartas la mitad del rango.<br>Ej: "¿Es mayor que 50?" → SÍ → nuevo rango 51–100.';
                 }
+                buildProgressGrid();
             }
 
-            // --- Manejar intento según modo ---
+            // --- Manejar intento ---
             function handleGuess() {
-                if (rondaTerminada) return;
+                if (rondaTerminada || autoLinearActive) return;
 
                 const rawValue = guessInput.value.trim();
                 if (rawValue === '') {
@@ -599,27 +723,33 @@
                 }
 
                 if (currentMode === 'lineal') {
-                    // Modo Lineal: intento directo
+                    // MODO LINEAL REAL: solo SÍ/NO
                     if (guessed < 1 || guessed > 100) {
                         feedbackMsgEl.textContent = '⚠️ El número debe estar entre 1 y 100.';
                         feedbackMsgEl.className = 'feedback-message';
                         return;
                     }
+                    if (checkedNumbers.has(guessed)) {
+                        feedbackMsgEl.textContent = `⚠️ Ya probaste el ${guessed}. Intenta con otro número.`;
+                        feedbackMsgEl.className = 'feedback-message';
+                        return;
+                    }
                     intentosRonda++;
                     intentosCountEl.textContent = intentosRonda;
-                    addLogEntry(`Intento ${intentosRonda}: ${guessed}`);
+                    checkedNumbers.add(guessed);
+                    addLogEntry(`Intento ${intentosRonda}: ¿Es el ${guessed}? → ${guessed === secretNumber ? 'SÍ ✅' : 'NO ❌'}`,
+                        guessed === secretNumber ? 'hit' : 'attempt');
 
                     if (guessed === secretNumber) {
+                        updateProgressGrid(guessed, true);
                         terminarRonda(true);
-                    } else if (guessed < secretNumber) {
-                        feedbackMsgEl.textContent = '📈 Demasiado bajo. ¡Sigue buscando!';
-                        feedbackMsgEl.className = 'feedback-message feedback-too-low';
                     } else {
-                        feedbackMsgEl.textContent = '📉 Demasiado alto. ¡Sigue buscando!';
-                        feedbackMsgEl.className = 'feedback-message feedback-too-high';
+                        updateProgressGrid(guessed, false);
+                        feedbackMsgEl.textContent = `❌ No. El número NO es ${guessed}. Sigue probando.`;
+                        feedbackMsgEl.className = 'feedback-message feedback-no';
                     }
                 } else {
-                    // Modo Binario: "¿Es mayor que X?"
+                    // MODO BINARIO: "¿Es mayor que X?"
                     if (guessed < rangoMin || guessed > rangoMax) {
                         feedbackMsgEl.textContent =
                             `⚠️ El número debe estar entre ${rangoMin} y ${rangoMax} (rango actual).`;
@@ -631,31 +761,18 @@
 
                     const esMayor = secretNumber > guessed;
                     if (esMayor) {
-                        // El número secreto es MAYOR que lo adivinado
                         feedbackMsgEl.textContent = `✅ Sí, es mayor que ${guessed}.`;
-                        feedbackMsgEl.className = 'feedback-message feedback-too-low';
-                        addLogEntry(`Pregunta ${intentosRonda}: ¿Es mayor que ${guessed}? → SÍ`,
-                            'discard');
+                        feedbackMsgEl.className = 'feedback-message feedback-info';
+                        addLogEntry(`Pregunta ${intentosRonda}: ¿Es mayor que ${guessed}? → SÍ`, 'discard');
                         rangoMin = guessed + 1;
-                        addLogEntry(`↳ Nuevo rango: ${rangoMin}–${rangoMax} (descartado 1–${guessed})`,
-                            'discard');
+                        addLogEntry(`↳ Descartado 1–${guessed}. Nuevo rango: ${rangoMin}–${rangoMax}`, 'discard');
                     } else {
-                        // El número secreto es MENOR o IGUAL
-                        if (guessed === secretNumber && guessed === rangoMin && rangoMin === rangoMax) {
-                            // Caso especial: acertó justo el número cuando el rango es 1 solo
-                            feedbackMsgEl.textContent = `🎯 ¡Exacto! El número es ${secretNumber}.`;
-                            feedbackMsgEl.className = 'feedback-message feedback-correct';
-                            addLogEntry(`Pregunta ${intentosRonda}: ¿Es mayor que ${guessed}? → NO (es igual)`,
-                                'discard');
-                            terminarRonda(true);
-                            return;
-                        }
                         feedbackMsgEl.textContent = `❌ No, no es mayor que ${guessed}.`;
-                        feedbackMsgEl.className = 'feedback-message feedback-too-high';
-                        addLogEntry(`Pregunta ${intentosRonda}: ¿Es mayor que ${guessed}? → NO`,
-                            'discard');
+                        feedbackMsgEl.className = 'feedback-message feedback-no';
+                        addLogEntry(`Pregunta ${intentosRonda}: ¿Es mayor que ${guessed}? → NO`, 'discard');
                         rangoMax = guessed;
-                        addLogEntry(`↳ Nuevo rango: ${rangoMin}–${rangoMax} (descartado ${guessed+1}–100)`,
+                        addLogEntry(
+                            `↳ Descartado ${guessed+1}–${rangoMax > guessed ? rangoMax : ''}. Nuevo rango: ${rangoMin}–${rangoMax}`,
                             'discard');
                     }
                     rangeDisplayEl.textContent = `${rangoMin} – ${rangoMax}`;
@@ -664,12 +781,11 @@
                     guessInput.min = rangoMin;
                     guessInput.max = rangoMax;
 
-                    // Si el rango se redujo a un solo número, se ha encontrado
                     if (rangoMin === rangoMax) {
                         feedbackMsgEl.textContent = `🎯 ¡Encontrado! El número es ${rangoMin}.`;
-                        feedbackMsgEl.className = 'feedback-message feedback-correct';
+                        feedbackMsgEl.className = 'feedback-message feedback-si';
                         addLogEntry(`🏁 Rango reducido a un solo número: ${rangoMin}`, 'discard');
-                        secretNumber = rangoMin; // Aseguramos coincidencia
+                        secretNumber = rangoMin;
                         terminarRonda(true);
                         return;
                     }
@@ -679,78 +795,125 @@
                 guessInput.focus();
             }
 
+            // --- Simulación automática de búsqueda lineal completa ---
+            function autoLinearSearch() {
+                if (rondaTerminada || autoLinearActive || currentMode !== 'lineal') return;
+                autoLinearActive = true;
+                guessInput.disabled = true;
+                guessBtn.disabled = true;
+                autoLinearBtn.disabled = true;
+
+                let current = 1;
+                // Buscar desde el último número no probado
+                if (checkedNumbers.size > 0) {
+                    current = Math.max(...checkedNumbers) + 1;
+                }
+
+                function step() {
+                    if (current > 100 || rondaTerminada) {
+                        autoLinearActive = false;
+                        if (!rondaTerminada) {
+                            feedbackMsgEl.textContent = '⚠️ Error: no se encontró el número (no debería ocurrir).';
+                            feedbackMsgEl.className = 'feedback-message';
+                        }
+                        return;
+                    }
+                    if (rondaTerminada) {
+                        autoLinearActive = false;
+                        return;
+                    }
+                    // Saltar números ya comprobados manualmente
+                    if (checkedNumbers.has(current)) {
+                        current++;
+                        setTimeout(step, 30);
+                        return;
+                    }
+                    intentosRonda++;
+                    intentosCountEl.textContent = intentosRonda;
+                    checkedNumbers.add(current);
+                    addLogEntry(`Intento ${intentosRonda}: ¿Es el ${current}? → ${current === secretNumber ? 'SÍ ✅' : 'NO ❌'}`,
+                        current === secretNumber ? 'hit' : 'attempt');
+
+                    if (current === secretNumber) {
+                        updateProgressGrid(current, true);
+                        terminarRonda(true);
+                        autoLinearActive = false;
+                    } else {
+                        updateProgressGrid(current, false);
+                        feedbackMsgEl.textContent = `❌ No. El número NO es ${current}. Probando siguiente...`;
+                        feedbackMsgEl.className = 'feedback-message feedback-no';
+                        current++;
+                        setTimeout(step, 80); // Pequeña pausa para que se vea la animación
+                    }
+                }
+                step();
+            }
+
             function terminarRonda(encontrado) {
                 rondaTerminada = true;
+                autoLinearActive = false;
                 stopTimer();
                 guessInput.disabled = true;
                 guessBtn.disabled = true;
-                feedbackMsgEl.textContent = `🎉 ¡Correcto! El número era ${secretNumber}.`;
-                feedbackMsgEl.className = 'feedback-message feedback-correct';
+                autoLinearBtn.disabled = true;
 
-                // Registrar puntuación
                 if (currentMode === 'lineal') {
                     totalIntentosLineal += intentosRonda;
                     rondaLinealCompletadas++;
+                    feedbackMsgEl.textContent = `🎉 ¡Correcto! El número era ${secretNumber}.`;
+                    feedbackMsgEl.className = 'feedback-message feedback-si';
                 } else {
                     totalIntentosBinaria += intentosRonda;
                     rondaBinariaCompletadas++;
+                    feedbackMsgEl.textContent = `🎉 ¡Encontrado! El número era ${secretNumber}.`;
+                    feedbackMsgEl.className = 'feedback-message feedback-si';
                 }
                 updateScoresDisplay();
 
-                // Mostrar pantalla de resultado
                 resultScoreEl.textContent = `${intentosRonda} intentos`;
-                resultMsgEl.textContent = `⏱️ Tiempo: ${formatTime(secondsElapsed)} | Rango: 1–100`;
+                resultMsgEl.textContent = `⏱️ Tiempo: ${formatTime(secondsElapsed)} | Número secreto: ${secretNumber}`;
                 resultScreen.classList.add('show');
                 gameArea.style.display = 'none';
                 guessArea.style.display = 'none';
+                autoLinearBtn.style.display = 'none';
 
-                // Verificar si se completaron las rondas del modo actual
-                const rondasCompletadas = currentMode === 'lineal' ? rondaLinealCompletadas :
-                    rondaBinariaCompletadas;
+                const rondasCompletadas = currentMode === 'lineal' ? rondaLinealCompletadas : rondaBinariaCompletadas;
                 if (rondasCompletadas >= TOTAL_ROUNDS) {
                     if (currentMode === 'lineal') {
-                        // Cambiar automáticamente a binaria
                         resultMsgEl.textContent +=
-                            ' | ✅ ¡Has completado las 5 rondas de Búsqueda Lineal! Ahora toca Búsqueda Binaria.';
+                            ' | ✅ Completaste 5 rondas de Búsqueda Lineal. ¡Ahora prueba la Binaria!';
                         newRoundBtn.textContent = '▶️ Empezar Búsqueda Binaria';
-                        newRoundBtn.onclick = () => {
-                            cambiarModo('binaria');
-                        };
+                        newRoundBtn.onclick = () => cambiarModo('binaria');
                     } else {
-                        // Juego completamente terminado
-                        resultMsgEl.textContent += ' | 🏁 ¡Juego terminado! Revisa tus puntuaciones.';
+                        resultMsgEl.textContent += ' | 🏁 ¡Juego terminado! Compara tus puntuaciones.';
                         newRoundBtn.textContent = '🔄 Jugar de nuevo (reinicia todo)';
                         newRoundBtn.onclick = reiniciarJuegoCompleto;
                     }
                 } else {
                     newRoundBtn.textContent = '▶️ Siguiente ronda';
-                    newRoundBtn.onclick = () => {
-                        prepararNuevaRonda();
-                    };
+                    newRoundBtn.onclick = () => prepararNuevaRonda();
                 }
             }
 
             function cambiarModo(nuevoModo) {
+                stopTimer();
+                autoLinearActive = false;
                 currentMode = nuevoModo;
                 rangoMin = 1;
                 rangoMax = 100;
+                checkedNumbers = new Set();
                 if (nuevoModo === 'lineal') {
                     btnLineal.classList.add('active');
                     btnBinaria.classList.remove('active');
                     rondaLinealCompletadas = 0;
                     totalIntentosLineal = 0;
-                    updateScoresDisplay();
                 } else {
                     btnBinaria.classList.add('active');
                     btnLineal.classList.remove('active');
                     rondaBinariaCompletadas = 0;
                     totalIntentosBinaria = 0;
-                    updateScoresDisplay();
-                    // Si venimos de lineal, mantenemos el acumulado visible pero reseteamos contador binario
-                    if (nuevoModo === 'binaria' && rondaLinealCompletadas === TOTAL_ROUNDS) {
-                        // se resetea binaria, lineal se mantiene en score
-                    }
                 }
+                updateScoresDisplay();
                 prepararNuevaRonda();
                 resultScreen.classList.remove('show');
                 gameArea.style.display = 'flex';
@@ -760,58 +923,4 @@
                 newRoundBtn.onclick = () => prepararNuevaRonda();
             }
 
-            function reiniciarJuegoCompleto() {
-                stopTimer();
-                totalIntentosLineal = 0;
-                totalIntentosBinaria = 0;
-                rondaLinealCompletadas = 0;
-                rondaBinariaCompletadas = 0;
-                updateScoresDisplay();
-                cambiarModo('lineal');
-                prepararNuevaRonda();
-                resultScreen.classList.remove('show');
-                gameArea.style.display = 'flex';
-                guessArea.style.display = 'flex';
-            }
-
-            // --- Event Listeners ---
-            btnLineal.addEventListener('click', () => {
-                if (currentMode !== 'lineal') {
-                    if (rondaBinariaCompletadas > 0 && rondaBinariaCompletadas < TOTAL_ROUNDS) {
-                        if (!confirm(
-                                '¿Seguro que quieres cambiar de modo? Perderás el progreso de las rondas de Búsqueda Binaria.'
-                                )) return;
-                    }
-                    cambiarModo('lineal');
-                    reiniciarJuegoCompleto();
-                }
-            });
-
-            btnBinaria.addEventListener('click', () => {
-                if (currentMode !== 'binaria') {
-                    if (rondaLinealCompletadas > 0 && rondaLinealCompletadas < TOTAL_ROUNDS) {
-                        if (!confirm(
-                                '¿Seguro que quieres cambiar de modo? Perderás el progreso de las rondas de Búsqueda Lineal.'
-                                )) return;
-                    }
-                    cambiarModo('binaria');
-                    reiniciarJuegoCompleto();
-                }
-            });
-
-            guessBtn.addEventListener('click', handleGuess);
-            guessInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleGuess();
-                }
-            });
-
-            // --- Inicio automático ---
-            reiniciarJuegoCompleto();
-            prepararNuevaRonda();
-            updateRondaDisplay();
-        })();
-    </script>
-</body>
-</html>
+            function reiniciarJuegoCompleto
