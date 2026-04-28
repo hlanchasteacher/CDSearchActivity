@@ -1,926 +1,1121 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔍 Búsqueda Lineal vs Binaria - Sin Pistas</title>
-    <style>
-        :root {
-            --bg: #1a1a2e;
-            --card: #16213e;
-            --primary: #0f3460;
-            --secondary: #e94560;
-            --accent: #f5c518;
-            --text: #eee;
-            --correct: #2ecc71;
-            --wrong: #e74c3c;
-            --border: #533483;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Search · Pre-class Activity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ─── Variables ─── */
+  :root {
+    --bg:       #0f1117;
+    --surface:  #181c26;
+    --card:     #1e2333;
+    --border:   rgba(255,255,255,0.08);
+    --border2:  rgba(255,255,255,0.14);
+    --text:     #e8e4da;
+    --muted:    #7a7e8a;
+    --amber:    #f5a623;
+    --amber-d:  #c2811a;
+    --amber-bg: rgba(245,166,35,0.12);
+    --amber-bd: rgba(245,166,35,0.3);
+    --teal:     #2dd4a4;
+    --teal-d:   #1a9e78;
+    --teal-bg:  rgba(45,212,164,0.1);
+    --teal-bd:  rgba(45,212,164,0.28);
+    --red-bg:   rgba(220,80,70,0.12);
+    --red-bd:   rgba(220,80,70,0.3);
+    --red-text: #f87171;
+    --mono:     'DM Mono', monospace;
+    --serif:    'Fraunces', Georgia, serif;
+    --sans:     'DM Sans', system-ui, sans-serif;
+    --radius:   10px;
+    --radius-lg:16px;
+  }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+  /* ─── Reset ─── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
 
-        body {
-            background: var(--bg);
-            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 10px;
-            color: var(--text);
-            background-image: radial-gradient(circle at 20% 20%, #1a1a3e 0%, #0a0a15 90%);
-        }
+  /* ─── Layout ─── */
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
 
-        .game-container {
-            width: 100%;
-            max-width: 850px;
-            background: var(--card);
-            border-radius: 28px;
-            padding: 20px 25px 30px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 0 2px var(--border);
-            position: relative;
-            overflow: hidden;
-        }
+  /* ─── Screens ─── */
+  .screen { display: none; }
+  .screen.on {
+    display: block;
+    animation: fadeUp .3s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
-        .game-container::before {
-            content: "";
-            position: absolute;
-            top: -50px;
-            right: -50px;
-            width: 150px;
-            height: 150px;
-            background: var(--secondary);
-            border-radius: 50%;
-            opacity: 0.08;
-            pointer-events: none;
-            z-index: 0;
-        }
+  /* ─── Typography ─── */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: .5rem;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 300;
+    line-height: 1.25;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  h2 {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--text);
+    margin-bottom: .75rem;
+  }
+  p { color: var(--muted); }
+  strong { font-weight: 500; color: var(--text); }
 
-        .game-container>* {
-            position: relative;
-            z-index: 1;
-        }
+  /* ─── Cards ─── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: .75rem;
+  }
+  .card-amber { border-color: var(--amber-bd); background: rgba(245,166,35,0.06); }
+  .card-teal  { border-color: var(--teal-bd);  background: rgba(45,212,164,0.05); }
+  .card-red   { border-color: var(--red-bd);   background: var(--red-bg); }
 
-        h1 {
-            text-align: center;
-            font-size: 2.2rem;
-            margin-bottom: 5px;
-            letter-spacing: 1px;
-            background: linear-gradient(135deg, var(--accent), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 800;
-        }
+  /* ─── Badges ─── */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-weight: 500;
+    margin-bottom: .85rem;
+  }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-bd); }
+  .badge-teal  { background: var(--teal-bg);  color: var(--teal);  border: 1px solid var(--teal-bd); }
+  .badge-muted { background: var(--surface);  color: var(--muted); border: 1px solid var(--border); }
 
-        .subtitle {
-            text-align: center;
-            font-size: 1rem;
-            margin-bottom: 20px;
-            opacity: 0.8;
-            color: #aaa;
-        }
+  /* ─── Buttons ─── */
+  button {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 22px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .1s;
+  }
+  button:hover { background: var(--card); border-color: rgba(255,255,255,0.22); }
+  button:active { transform: scale(.97); }
+  button.primary {
+    background: var(--amber);
+    color: #1a0f00;
+    border-color: var(--amber);
+  }
+  button.primary:hover { background: #e89a1c; border-color: #e89a1c; }
+  button.ghost { background: transparent; border-color: var(--border); color: var(--muted); font-size: 13px; padding: 7px 14px; }
+  button.ghost:hover { color: var(--text); border-color: var(--border2); }
+  button:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  button:disabled:hover { background: var(--surface); border-color: var(--border2); }
+  button.ghost:disabled:hover { color: var(--muted); border-color: var(--border); background: transparent; }
 
-        .mode-selector {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
+  /* ─── Input / Textarea ─── */
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-family: var(--sans);
+    font-size: 16px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+    margin-bottom: 1rem;
+  }
+  input[type="text"]:focus { border-color: var(--amber); }
+  input[type="text"]::placeholder { color: var(--muted); }
 
-        .mode-btn {
-            background: var(--primary);
-            border: 2px solid transparent;
-            color: var(--text);
-            font-size: 1.1rem;
-            font-weight: bold;
-            padding: 12px 24px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: 0.5px;
-        }
+  .qa-input {
+    width: 100%;
+    min-height: 78px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--text);
+    resize: vertical;
+    outline: none;
+    transition: border-color .15s;
+    margin-bottom: .5rem;
+    line-height: 1.55;
+  }
+  .qa-input:focus { border-color: var(--amber); }
+  .qa-input::placeholder { color: var(--muted); font-style: italic; }
+  .qa-input:disabled { opacity: 0.55; cursor: not-allowed; background: var(--card); }
 
-        .mode-btn:hover {
-            background: #1a4a8a;
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
+  /* ─── Progress dots ─── */
+  .dots { display: flex; gap: 6px; align-items: center; }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    transition: background .2s, border-color .2s;
+  }
+  .dot.done-amber { background: var(--amber); border-color: var(--amber); }
+  .dot.done-teal  { background: var(--teal);  border-color: var(--teal); }
+  .dot.active-amber { background: rgba(245,166,35,.3); border-color: var(--amber); }
+  .dot.active-teal  { background: rgba(45,212,164,.3); border-color: var(--teal); }
 
-        .mode-btn.active {
-            background: var(--secondary);
-            border-color: var(--accent);
-            box-shadow: 0 0 25px rgba(233, 68, 96, 0.5);
-            color: #fff;
-        }
+  /* ─── Game header ─── */
+  .game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .stat-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: .85rem;
+  }
+  .stat {
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stat-val {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 500;
+  }
 
-        .stats-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 60px;
-            padding: 12px 22px;
-            margin-bottom: 20px;
-            border: 1px solid #333;
-        }
+  /* ─── Message box ─── */
+  .msg-box {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    line-height: 1.5;
+  }
+  .msg-box.found  { background: var(--amber-bg); border-color: var(--amber-bd); color: var(--amber); }
+  .msg-box.higher { background: var(--teal-bg);  border-color: var(--teal-bd);  color: var(--teal); }
+  .msg-box.lower  { background: var(--red-bg);   border-color: var(--red-bd);   color: var(--red-text); }
 
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: bold;
-        }
-        .stat-icon {
-            font-size: 1.5rem;
-        }
-        .stat-value {
-            font-size: 1.4rem;
-            color: var(--accent);
-            min-width: 35px;
-            text-align: center;
-        }
+  /* ─── Card grid ─── */
+  .card-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 1.25rem;
+  }
+  .game-card {
+    width: 52px;
+    height: 64px;
+    perspective: 500px;
+    flex-shrink: 0;
+  }
+  /* Small cards for 70-card mode */
+  .card-grid.small .game-card { width: 34px; height: 42px; }
+  .card-grid.small .card-num  { font-size: 12px; }
+  .card-grid.small .q-mark   { font-size: 14px; }
+  .card-grid.small .elim-arrow { font-size: 10px; }
+  .card-grid.small .pos-label  { font-size: 6px; }
 
-        .game-area {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 24px;
-            padding: 25px 20px;
-            margin-bottom: 20px;
-            border: 1px solid #333;
-            min-height: 280px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            position: relative;
-        }
+  .game-card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+  }
+  .game-card.flipped .game-card-inner { transform: rotateY(180deg); }
+  .face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+  }
+  .face-back {
+    background: var(--card);
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .face-back:hover:not(.no-click) { border-color: var(--border2); background: var(--surface); }
+  .face-back.no-click { cursor: default; }
+  .face-back.elim-lo  { background: var(--red-bg);  border-color: var(--red-bd);  cursor: default; }
+  .face-back.elim-hi  { background: var(--teal-bg); border-color: var(--teal-bd); cursor: default; }
+  .face-front {
+    background: var(--card);
+    border-color: var(--border);
+    transform: rotateY(180deg);
+  }
+  .face-front.is-target { background: var(--amber-bg); border-color: var(--amber-bd); }
+  .pos-label { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+  .q-mark { font-size: 22px; color: var(--border2); }
+  .elim-arrow { font-size: 16px; }
+  .card-num {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .card-num.target-num { color: var(--amber); }
 
-        .range-display {
-            background: #000;
-            padding: 15px 25px;
-            border-radius: 30px;
-            font-size: 1.8rem;
-            font-weight: 800;
-            letter-spacing: 2px;
-            border: 2px solid var(--border);
-            text-align: center;
-            min-width: 200px;
-            transition: all 0.3s;
-        }
-        .range-display.highlight {
-            border-color: var(--accent);
-            box-shadow: 0 0 30px rgba(245, 197, 24, 0.4);
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0%,
-            100% {
-                box-shadow: 0 0 20px rgba(245, 197, 24, 0.3);
-            }
-            50% {
-                box-shadow: 0 0 40px rgba(245, 197, 24, 0.7);
-            }
-        }
+  /* ─── Round done panel ─── */
+  .rdone {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    animation: fadeUp .2s ease both;
+  }
+  .rdone-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: .5rem; }
+  .rdone-log { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 1rem; }
+  .rdone-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-        .guess-input-area {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .guess-input-area input {
-            font-size: 1.4rem;
-            padding: 14px 20px;
-            width: 180px;
-            border-radius: 40px;
-            border: 2px solid #555;
-            background: #0a0a15;
-            color: #fff;
-            text-align: center;
-            font-weight: bold;
-            outline: none;
-            transition: 0.3s;
-        }
-        .guess-input-area input:focus {
-            border-color: var(--secondary);
-            box-shadow: 0 0 20px rgba(233, 68, 96, 0.5);
-        }
-        .guess-btn {
-            background: var(--secondary);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding: 14px 28px;
-            border-radius: 40px;
-            cursor: pointer;
-            letter-spacing: 1px;
-            transition: all 0.3s;
-        }
-        .guess-btn:hover:not(:disabled) {
-            background: #ff5a7a;
-            transform: scale(1.05);
-        }
-        .guess-btn:disabled {
-            background: #555;
-            cursor: not-allowed;
-            transform: none;
-        }
+  /* ─── Q&A ─── */
+  .qa-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: .65rem;
+  }
+  .qa-q { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: .65rem; }
+  .qa-hint { font-size: 12px; color: var(--muted); margin-bottom: .5rem; font-style: italic; }
+  .qa-a {
+    padding: 10px 14px;
+    background: rgba(45,212,164,.06);
+    border-left: 2px solid var(--teal);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.65;
+    display: none;
+    margin-top: .5rem;
+  }
+  .qa-a.show { display: block; animation: fadeUp .2s ease both; }
 
-        .auto-btn {
-            background: #ff8c00;
-            border: none;
-            color: #000;
-            font-weight: bold;
-            font-size: 1rem;
-            padding: 12px 22px;
-            border-radius: 40px;
-            cursor: pointer;
-            letter-spacing: 0.5px;
-            transition: all 0.3s;
-            margin-top: 5px;
-        }
-        .auto-btn:hover:not(:disabled) {
-            background: #ffaa33;
-            transform: scale(1.04);
-        }
-        .auto-btn:disabled {
-            background: #555;
-            color: #999;
-            cursor: not-allowed;
-            transform: none;
-        }
+  /* ─── Comparison bars ─── */
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+  .bar-label { font-family: var(--mono); font-size: 10px; color: var(--muted); width: 64px; text-align: right; flex-shrink: 0; }
+  .bar-track {
+    flex: 1;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+    height: 22px;
+    border: 1px solid var(--border);
+  }
+  .bar-fill {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 7px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    min-width: 24px;
+    transition: width .5s ease;
+  }
+  .bar-fill.amber { background: rgba(245,166,35,.3); color: var(--amber); }
+  .bar-fill.teal  { background: rgba(45,212,164,.25); color: var(--teal); }
+  .bar-section-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 10px 0 5px;
+    padding-left: 72px;
+  }
 
-        .feedback-message {
-            font-size: 1.2rem;
-            font-weight: bold;
-            min-height: 30px;
-            text-align: center;
-            transition: 0.2s;
-        }
-        .feedback-no {
-            color: #ff6b6b;
-        }
-        .feedback-si {
-            color: var(--correct);
-            font-size: 1.5rem;
-            animation: bounce 0.5s;
-        }
-        .feedback-info {
-            color: #4ecdc4;
-        }
-        @keyframes bounce {
-            0%,
-            100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.2);
-            }
-        }
+  /* ─── Big numbers ─── */
+  .big-quad {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .big-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .big-num-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .big-num-card.amber { border-color: var(--amber-bd); }
+  .big-num-card.teal  { border-color: var(--teal-bd); }
+  .big-num-card.amber-dashed { border-color: var(--amber-bd); border-style: dashed; }
+  .big-num-card.teal-dashed  { border-color: var(--teal-bd);  border-style: dashed; }
+  .big-num { font-family: var(--mono); font-size: 40px; font-weight: 500; line-height: 1; }
+  .big-num.amber { color: var(--amber); }
+  .big-num.teal  { color: var(--teal); }
+  .big-label { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
+  .big-label.amber { color: var(--amber-d); }
+  .big-label.teal  { color: var(--teal-d); }
+  .big-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
 
-        .log-panel {
-            background: #000;
-            border-radius: 16px;
-            padding: 15px;
-            max-height: 200px;
-            overflow-y: auto;
-            width: 100%;
-            border: 1px solid #333;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            margin-top: 10px;
-        }
-        .log-entry {
-            padding: 3px 0;
-            border-bottom: 1px solid #222;
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .log-attempt {
-            color: #ccc;
-        }
-        .log-discard {
-            color: var(--accent);
-            font-weight: bold;
-        }
-        .log-hit {
-            color: var(--correct);
-            font-weight: bold;
-        }
+  /* ─── Final name display ─── */
+  .name-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+  }
+  .name-tag strong { color: var(--text); }
 
-        .result-screen {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            animation: fadeIn 0.5s;
-        }
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .result-screen.show {
-            display: block;
-        }
-        .result-score {
-            font-size: 3rem;
-            font-weight: 900;
-            color: var(--accent);
-        }
-        .new-game-btn {
-            background: var(--accent);
-            border: none;
-            color: #000;
-            font-weight: bold;
-            font-size: 1.2rem;
-            padding: 14px 30px;
-            border-radius: 40px;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: 0.3s;
-        }
-        .new-game-btn:hover {
-            background: #ffda3d;
-            transform: scale(1.05);
-        }
+  /* ─── Algo info cards ─── */
+  .algo-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .algo-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+  }
+  .algo-card.amber { border-color: var(--amber-bd); }
+  .algo-card.teal  { border-color: var(--teal-bd); }
+  .algo-name { font-family: var(--serif); font-size: 18px; font-weight: 300; margin-bottom: .5rem; }
+  .algo-name.amber { color: var(--amber); }
+  .algo-name.teal  { color: var(--teal); }
+  .algo-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+  .algo-code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface);
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    line-height: 1.6;
+  }
 
-        .scoreboard {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 5px;
-        }
-        .score-card {
-            background: var(--primary);
-            border-radius: 20px;
-            padding: 10px 18px;
-            text-align: center;
-            border: 1px solid var(--border);
-            min-width: 130px;
-        }
-        .score-card .label {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .score-card .number {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--accent);
-        }
+  /* ─── Submit status ─── */
+  .submit-status {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: var(--mono);
+    display: none;
+    margin-top: 10px;
+  }
+  .submit-status.ok   { background: var(--teal-bg); border: 1px solid var(--teal-bd); color: var(--teal); display: block; }
+  .submit-status.err  { background: var(--red-bg);  border: 1px solid var(--red-bd);  color: var(--red-text); display: block; }
+  .submit-status.wait { background: var(--surface); border: 1px solid var(--border);  color: var(--muted); display: block; }
 
-        .rules-hint {
-            text-align: center;
-            font-size: 0.85rem;
-            opacity: 0.85;
-            margin-top: 8px;
-            font-style: italic;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            padding: 10px 15px;
-            line-height: 1.5;
-        }
+  /* ─── Divider ─── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 
-        .progress-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            justify-content: center;
-            margin-top: 10px;
-            max-width: 600px;
-        }
-        .grid-cell {
-            width: 28px;
-            height: 28px;
-            font-size: 0.7rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            background: #222;
-            color: #888;
-            transition: 0.2s;
-            border: 1px solid #444;
-        }
-        .grid-cell.checked {
-            background: #333;
-            color: #ccc;
-        }
-        .grid-cell.found {
-            background: var(--correct);
-            color: #fff;
-            font-weight: bold;
-            animation: bounce 0.5s;
-            border-color: #fff;
-        }
+  /* ─── Step list ─── */
+  .step-list { display: flex; flex-direction: column; gap: 8px; }
+  .step-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .step-num {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500;
+    flex-shrink: 0;
+  }
+  .step-num.amber { background: var(--amber-bg); color: var(--amber); }
+  .step-num.teal  { background: var(--teal-bg);  color: var(--teal); }
+  .step-num.muted { background: var(--card);      color: var(--muted); }
+  .step-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .step-text strong { color: var(--text); }
 
-        @media (max-width: 550px) {
-            h1 {
-                font-size: 1.5rem;
-            }
-            .game-area {
-                padding: 15px;
-            }
-            .range-display {
-                font-size: 1.3rem;
-                min-width: 150px;
-                padding: 12px 18px;
-            }
-            .grid-cell {
-                width: 22px;
-                height: 22px;
-                font-size: 0.6rem;
-            }
-        }
-    </style>
+  @media (max-width: 480px) {
+    h1 { font-size: 24px; }
+    .algo-pair, .big-pair, .big-quad { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
-    <div class="game-container">
-        <h1>🔍 Búsqueda Lineal vs Binaria</h1>
-        <p class="subtitle">Experimenta la diferencia: sin pistas vs. descartando mitades</p>
+<div class="wrap">
 
-        <!-- Selector de modo -->
-        <div class="mode-selector">
-            <button id="btnLineal" class="mode-btn active">
-                <span>🐢</span> Búsqueda Lineal
-            </button>
-            <button id="btnBinaria" class="mode-btn">
-                <span>🐇</span> Búsqueda Binaria
-            </button>
-        </div>
+  <!-- ══ S0 · Welcome ══ -->
+  <div id="s0" class="screen on">
+    <div class="eyebrow">Pre-class activity · search algorithms</div>
+    <h1>How many tries do you need to find a number?</h1>
+    <p style="margin-bottom:1.5rem;">Before seeing the algorithms in class, you're going to discover them yourself. Complete both phases, answer the questions, and compare your results. The activity takes about 50 minutes.</p>
 
-        <!-- Estadísticas -->
-        <div class="stats-bar">
-            <div class="stat-item"><span class="stat-icon">🎯</span> Ronda <span class="stat-value" id="rondaNum">1</span>/5</div>
-            <div class="stat-item"><span class="stat-icon">❓</span> Intentos <span class="stat-value" id="intentosCount">0</span></div>
-            <div class="stat-item"><span class="stat-icon">⏱️</span> <span class="stat-value" id="timerDisplay">00:00</span></div>
-        </div>
-
-        <!-- Área de juego -->
-        <div class="game-area" id="gameArea">
-            <div style="font-size:1rem; opacity:0.8;">🤖 La máquina ha pensado un número secreto (1–100)</div>
-            <div class="range-display" id="rangeDisplay">1 – 100</div>
-
-            <!-- Cuadrícula de progreso para modo lineal -->
-            <div class="progress-grid" id="progressGrid" style="display: none;"></div>
-
-            <div class="guess-input-area" id="guessArea">
-                <input type="number" id="guessInput" placeholder="Tu intento..." min="1" max="100">
-                <button class="guess-btn" id="guessBtn">🔎 Intentar</button>
-            </div>
-            <button class="auto-btn" id="autoLinearBtn" style="display: none;">⚡ Simular búsqueda lineal completa</button>
-
-            <div class="feedback-message" id="feedbackMsg"></div>
-
-            <!-- Registro de pasos -->
-            <div class="log-panel" id="logPanel">
-                <div style="color:#666;">📋 Registro de intentos: (vacío)</div>
-            </div>
-        </div>
-
-        <!-- Pantalla de resultado -->
-        <div class="result-screen" id="resultScreen">
-            <div>🎉 ¡Número encontrado!</div>
-            <div class="result-score" id="resultScore"></div>
-            <div id="resultMsg"></div>
-            <button class="new-game-btn" id="newRoundBtn">▶️ Siguiente ronda</button>
-        </div>
-
-        <!-- Puntuaciones -->
-        <div class="scoreboard">
-            <div class="score-card">
-                <div class="label">🐢 Lineal (total)</div>
-                <div class="number" id="scoreLineal">0</div>
-            </div>
-            <div class="score-card">
-                <div class="label">🐇 Binaria (total)</div>
-                <div class="number" id="scoreBinaria">0</div>
-            </div>
-        </div>
-        <div class="rules-hint" id="rulesHint">
-            💡 <strong>Modo Lineal:</strong> Pregunta "¿Es el número X?". La máquina solo responde <strong>SÍ</strong> o <strong>NO</strong>. Sin pistas de "mayor/menor".<br>
-            💡 <strong>Modo Binario:</strong> Pregunta "¿Es mayor que X?" y descarta mitades del rango.
-        </div>
+    <div class="step-list" style="margin-bottom:1.5rem;">
+      <div class="step-item">
+        <div class="step-num amber">1</div>
+        <div class="step-text"><strong>Phase 1 · shuffled cards.</strong> Find a number among 16 cards in random order — no hints. Then again with 70 cards. 3 rounds each.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num teal">2</div>
+        <div class="step-text"><strong>Phase 2 · sorted cards.</strong> Cards go from lowest to highest. If you miss, you'll know whether the number is to the right or left. 16 cards, then 70 cards. 3 rounds each.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num muted">3</div>
+        <div class="step-text"><strong>Reflection & comparison.</strong> Guided questions to help you discover why there's such a big difference between the two strategies.</div>
+      </div>
     </div>
 
-    <script>
-        (function() {
-            // --- Estado ---
-            const TOTAL_ROUNDS = 5;
-            let currentMode = 'lineal';
-            let rondaLinealCompletadas = 0;
-            let rondaBinariaCompletadas = 0;
-            let intentosRonda = 0;
-            let secretNumber = null;
-            let timerInterval = null;
-            let secondsElapsed = 0;
-            let rondaTerminada = false;
-            let rangoMin = 1;
-            let rangoMax = 100;
-            let totalIntentosLineal = 0;
-            let totalIntentosBinaria = 0;
-            let checkedNumbers = new Set(); // Para modo lineal: números ya probados
-            let autoLinearActive = false; // Para evitar doble simulación
+    <label style="display:block;font-size:13px;color:var(--muted);margin-bottom:.4rem;font-family:var(--mono);">Your full name</label>
+    <input type="text" id="nameInput" placeholder="First and last name" autocomplete="name">
+    <button class="primary" onclick="startGame()">Start →</button>
+  </div>
 
-            // DOM
-            const btnLineal = document.getElementById('btnLineal');
-            const btnBinaria = document.getElementById('btnBinaria');
-            const rondaNumEl = document.getElementById('rondaNum');
-            const intentosCountEl = document.getElementById('intentosCount');
-            const timerDisplayEl = document.getElementById('timerDisplay');
-            const rangeDisplayEl = document.getElementById('rangeDisplay');
-            const guessInput = document.getElementById('guessInput');
-            const guessBtn = document.getElementById('guessBtn');
-            const autoLinearBtn = document.getElementById('autoLinearBtn');
-            const feedbackMsgEl = document.getElementById('feedbackMsg');
-            const logPanel = document.getElementById('logPanel');
-            const resultScreen = document.getElementById('resultScreen');
-            const resultScoreEl = document.getElementById('resultScore');
-            const resultMsgEl = document.getElementById('resultMsg');
-            const newRoundBtn = document.getElementById('newRoundBtn');
-            const scoreLinealEl = document.getElementById('scoreLineal');
-            const scoreBinariaEl = document.getElementById('scoreBinaria');
-            const rulesHint = document.getElementById('rulesHint');
-            const gameArea = document.getElementById('gameArea');
-            const guessArea = document.getElementById('guessArea');
-            const progressGrid = document.getElementById('progressGrid');
+  <!-- ══ S1 · Game ══ -->
+  <div id="s1" class="screen">
+    <div class="game-header">
+      <div id="ph-badge" class="badge badge-amber">Phase 1 · no order</div>
+      <div class="dots" id="dots"></div>
+    </div>
 
-            // --- Utilidades ---
-            function formatTime(sec) {
-                const m = Math.floor(sec / 60).toString().padStart(2, '0');
-                const s = (sec % 60).toString().padStart(2, '0');
-                return `${m}:${s}`;
-            }
+    <div class="stat-row">
+      <div class="stat">Find <span class="stat-val" id="tgt" style="color:var(--amber);margin-left:6px;"></span></div>
+      <div class="stat">Steps <span class="stat-val" id="stp" style="margin-left:6px;">0</span></div>
+    </div>
 
-            function startTimer() {
-                stopTimer();
-                secondsElapsed = 0;
-                timerDisplayEl.textContent = '00:00';
-                timerInterval = setInterval(() => {
-                    secondsElapsed++;
-                    timerDisplayEl.textContent = formatTime(secondsElapsed);
-                }, 1000);
-            }
+    <div class="msg-box" id="msg">Click any card to start…</div>
+    <div id="phase2-hint" style="display:none;margin-bottom:.85rem;" class="card card-teal">
+      <p style="font-size:13px;color:var(--teal);">Cards are <strong>sorted from lowest to highest</strong>. The position number appears on each card. If you miss, eliminated cards will change colour.</p>
+    </div>
 
-            function stopTimer() {
-                if (timerInterval) clearInterval(timerInterval);
-                timerInterval = null;
-            }
+    <div class="card-grid" id="grid"></div>
+    <div id="rdone" style="display:none;" class="rdone">
+      <div class="rdone-title" id="rtxt"></div>
+      <div class="rdone-log" id="rlog"></div>
+      <div class="rdone-actions">
+        <button id="nbtn" class="primary"></button>
+        <button class="ghost" id="skipbtn" style="display:none;" onclick="goS('s2')">Skip to Phase 1 reflection</button>
+      </div>
+    </div>
+  </div>
 
-            function resetLog() {
-                logPanel.innerHTML = '<div style="color:#666;">📋 Registro de intentos: (vacío)</div>';
-            }
+  <!-- ══ S1b · Intro to 70-card Phase 1 ══ -->
+  <div id="s1b" class="screen">
+    <div class="eyebrow">Phase 1 · Round 2 · 70 cards</div>
+    <h2>Now with 70 shuffled cards</h2>
+    <p style="margin-bottom:1.25rem;">Same rules as before — but now there are <strong style="color:var(--amber);">70 cards</strong> instead of 16, all in random order. No hints if you miss.</p>
+    <div class="card card-amber" style="margin-bottom:1.5rem;">
+      <p style="font-size:14px;color:var(--amber);line-height:1.65;">Before you start: if 16 cards took you an average of <span id="p1a_avg_hint">—</span> steps, how many do you predict it will take for 70? Write it down mentally!</p>
+    </div>
+    <div class="step-list" style="margin-bottom:1.5rem;">
+      <div class="step-item">
+        <div class="step-num amber">✦</div>
+        <div class="step-text"><strong>70 cards, randomly shuffled.</strong> Pick any card to flip it. No position numbers, no hints — pure guesswork.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num amber">✦</div>
+        <div class="step-text"><strong>3 rounds.</strong> Your step counts will be recorded and compared with the 16-card results in the reflection.</div>
+      </div>
+    </div>
+    <button class="primary" onclick="initP1b()">Start 70-card Phase 1 →</button>
+  </div>
 
-            function addLogEntry(message, type = 'attempt') {
-                if (logPanel.children.length === 1 && logPanel.children[0].textContent.includes('vacío')) {
-                    logPanel.innerHTML = '';
-                }
-                const entryDiv = document.createElement('div');
-                entryDiv.className = 'log-entry';
-                const span = document.createElement('span');
-                span.textContent = message;
-                if (type === 'discard') span.className = 'log-discard';
-                else if (type === 'hit') span.className = 'log-hit';
-                else span.className = 'log-attempt';
-                entryDiv.appendChild(span);
-                logPanel.appendChild(entryDiv);
-                logPanel.scrollTop = logPanel.scrollHeight;
-            }
+  <!-- ══ S2 · Reflection phase 1 ══ -->
+  <div id="s2" class="screen">
+    <div class="eyebrow">Reflection · Phase 1</div>
+    <h2>What happened in Phase 1?</h2>
+    <div class="big-pair" style="margin-bottom:1rem;">
+      <div class="big-num-card amber">
+        <div class="big-label amber">16 cards · avg steps</div>
+        <div class="big-num amber" id="r1avg">—</div>
+        <div id="r1res" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;justify-content:center;"></div>
+      </div>
+      <div class="big-num-card amber-dashed">
+        <div class="big-label amber">70 cards · avg steps</div>
+        <div class="big-num amber" id="r1bavg">—</div>
+        <div id="r1bres" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;justify-content:center;"></div>
+      </div>
+    </div>
+    <div id="q1" style="margin-bottom:1.5rem;"></div>
+    <button class="primary" onclick="goS('s3')">Continue to Phase 2 →</button>
+  </div>
 
-            function updateScoresDisplay() {
-                scoreLinealEl.textContent = totalIntentosLineal;
-                scoreBinariaEl.textContent = totalIntentosBinaria;
-            }
+  <!-- ══ S3 · Intro phase 2 ══ -->
+  <div id="s3" class="screen">
+    <div class="eyebrow">Phase 2 · sorted · 16 cards</div>
+    <h2>Now the cards are sorted</h2>
+    <p style="margin-bottom:1.25rem;">Two changes compared to Phase 1:</p>
+    <div class="step-list" style="margin-bottom:1.25rem;">
+      <div class="step-item">
+        <div class="step-num teal">✦</div>
+        <div class="step-text"><strong>Cards are sorted from lowest to highest.</strong> You can see the position of each card (1 = lowest value, 16 = highest). You don't know the exact value, but you know its place in the order.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num teal">✦</div>
+        <div class="step-text"><strong>If you miss, you get a hint.</strong> Eliminated cards change colour. Red ↑ = yours is higher. Green ↓ = yours is lower.</div>
+      </div>
+    </div>
+    <div class="card card-teal" style="margin-bottom:1.5rem;">
+      <p style="font-size:14px;color:var(--teal);line-height:1.65;">Key question before you begin: if you know the number is in the right half of the deck, which card is the smartest to flip to eliminate the most options in one go?</p>
+    </div>
+    <button class="primary" onclick="initP2()">Start Phase 2 →</button>
+  </div>
 
-            function updateRondaDisplay() {
-                if (currentMode === 'lineal') {
-                    rondaNumEl.textContent = `${Math.min(rondaLinealCompletadas + 1, TOTAL_ROUNDS)}/${TOTAL_ROUNDS}`;
-                } else {
-                    rondaNumEl.textContent = `${Math.min(rondaBinariaCompletadas + 1, TOTAL_ROUNDS)}/${TOTAL_ROUNDS}`;
-                }
-            }
+  <!-- ══ S3b · Intro to 70-card Phase 2 ══ -->
+  <div id="s3b" class="screen">
+    <div class="eyebrow">Phase 2 · Round 2 · 70 cards</div>
+    <h2>Binary search with 70 sorted cards</h2>
+    <p style="margin-bottom:1.25rem;">Same strategy as before — but now with <strong style="color:var(--teal);">70 sorted cards</strong>. Remember: always pick the middle of the remaining range!</p>
+    <div class="card card-teal" style="margin-bottom:1.25rem;">
+      <p style="font-size:14px;color:var(--teal);line-height:1.65;">With 16 sorted cards the strategy needed at most 4 steps. How many do you think 70 cards will need? Think before you start!</p>
+    </div>
+    <div class="step-list" style="margin-bottom:1.5rem;">
+      <div class="step-item">
+        <div class="step-num teal">✦</div>
+        <div class="step-text"><strong>70 cards, sorted lowest to highest.</strong> Position numbers are visible. Hints tell you higher ↑ or lower ↓ on every miss.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num teal">✦</div>
+        <div class="step-text"><strong>Apply the halving strategy.</strong> Always pick the card at the midpoint of whatever range is still active.</div>
+      </div>
+    </div>
+    <button class="primary" onclick="initP2b()">Start 70-card Phase 2 →</button>
+  </div>
 
-            // --- Construir cuadrícula de progreso (modo lineal) ---
-            function buildProgressGrid() {
-                progressGrid.innerHTML = '';
-                for (let i = 1; i <= 100; i++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'grid-cell';
-                    cell.textContent = i;
-                    cell.id = `grid-${i}`;
-                    progressGrid.appendChild(cell);
-                }
-            }
+  <!-- ══ S4 · Comparison ══ -->
+  <div id="s4" class="screen">
+    <div class="eyebrow">Comparison · all four sets</div>
+    <h2>How many steps did each set take you?</h2>
 
-            function updateProgressGrid(number, found = false) {
-                const cell = document.getElementById(`grid-${number}`);
-                if (!cell) return;
-                if (found) {
-                    cell.classList.add('found');
-                } else {
-                    cell.classList.add('checked');
-                }
-            }
+    <div class="big-quad">
+      <div class="big-num-card amber">
+        <div class="big-label amber">Phase 1 · 16 cards</div>
+        <div class="big-num amber" id="avg1a">—</div>
+        <div class="big-sub">avg steps</div>
+      </div>
+      <div class="big-num-card amber-dashed">
+        <div class="big-label amber">Phase 1 · 70 cards</div>
+        <div class="big-num amber" id="avg1b">—</div>
+        <div class="big-sub">avg steps</div>
+      </div>
+      <div class="big-num-card teal">
+        <div class="big-label teal">Phase 2 · 16 cards</div>
+        <div class="big-num teal" id="avg2a">—</div>
+        <div class="big-sub">avg steps</div>
+      </div>
+      <div class="big-num-card teal-dashed">
+        <div class="big-label teal">Phase 2 · 70 cards</div>
+        <div class="big-num teal" id="avg2b">—</div>
+        <div class="big-sub">avg steps</div>
+      </div>
+    </div>
 
-            function resetProgressGrid() {
-                const cells = progressGrid.querySelectorAll('.grid-cell');
-                cells.forEach(c => {
-                    c.classList.remove('checked', 'found');
-                });
-            }
+    <div class="card" style="margin-bottom:1.25rem;" id="bars4"></div>
+    <div id="q2" style="margin-bottom:1.5rem;"></div>
+    <button class="primary" onclick="buildFinal();goS('s5')">See final result →</button>
+  </div>
 
-            // --- Generar secreto ---
-            function generarNuevoSecreto() {
-                secretNumber = Math.floor(Math.random() * 100) + 1;
-                // Para depuración del profesor (visible en consola F12):
-                console.log(`[DEBUG] Modo: ${currentMode} | Número secreto: ${secretNumber}`);
-            }
+  <!-- ══ S5 · Final ══ -->
+  <div id="s5" class="screen">
+    <div class="eyebrow">Final result</div>
+    <h1>What you just discovered has a name</h1>
 
-            // --- Preparar ronda ---
-            function prepararNuevaRonda() {
-                stopTimer();
-                autoLinearActive = false;
-                generarNuevoSecreto();
-                intentosRonda = 0;
-                intentosCountEl.textContent = '0';
-                rondaTerminada = false;
-                rangoMin = 1;
-                rangoMax = 100;
-                checkedNumbers = new Set();
-                resetProgressGrid();
-                rangeDisplayEl.textContent = '1 – 100';
-                rangeDisplayEl.classList.remove('highlight');
-                feedbackMsgEl.textContent = '';
-                feedbackMsgEl.className = 'feedback-message';
-                resultScreen.classList.remove('show');
-                gameArea.style.display = 'flex';
-                guessArea.style.display = 'flex';
-                guessInput.value = '';
-                guessInput.disabled = false;
-                guessBtn.disabled = false;
-                guessInput.focus();
-                resetLog();
-                updateRondaDisplay();
-                startTimer();
+    <div class="name-tag" id="nameFinal" style="display:none;"><strong></strong></div>
 
-                if (currentMode === 'lineal') {
-                    progressGrid.style.display = 'flex';
-                    autoLinearBtn.style.display = 'inline-block';
-                    autoLinearBtn.disabled = false;
-                    guessInput.placeholder = 'Adivina un número...';
-                    guessInput.min = 1;
-                    guessInput.max = 100;
-                    rulesHint.innerHTML =
-                        '💡 <strong>Modo Lineal REAL:</strong> Pregunta "¿Es el número X?".<br>La máquina solo responde <strong style="color:#2ecc71;">SÍ</strong> (acertaste) o <strong style="color:#e74c3c;">NO</strong> (fallaste). <strong>No hay pistas</strong> de mayor/menor.<br>Debes probar uno por uno hasta encontrarlo.';
-                } else {
-                    progressGrid.style.display = 'none';
-                    autoLinearBtn.style.display = 'none';
-                    guessInput.placeholder = 'Preguntar "mayor que..."';
-                    guessInput.min = rangoMin;
-                    guessInput.max = rangoMax;
-                    rulesHint.innerHTML =
-                        '💡 <strong>Modo Binario:</strong> Pregunta "¿Es mayor que X?".<br>La máquina dice <strong>SÍ</strong> o <strong>NO</strong> y descartas la mitad del rango.<br>Ej: "¿Es mayor que 50?" → SÍ → nuevo rango 51–100.';
-                }
-                buildProgressGrid();
-            }
+    <div class="algo-pair">
+      <div class="algo-card amber">
+        <div class="eyebrow" style="color:var(--amber-d);">What you did in Phase 1</div>
+        <div class="algo-name amber">Linear search</div>
+        <div class="algo-desc">Checks elements one by one until the target is found. Requires no prior order.</div>
+        <div class="algo-code">Worst case: <strong style="color:var(--amber);">N steps</strong><br><span style="font-size:11px;">16 cards → up to 16 · 70 cards → up to 70</span></div>
+      </div>
+      <div class="algo-card teal">
+        <div class="eyebrow" style="color:var(--teal-d);">What you did in Phase 2</div>
+        <div class="algo-name teal">Binary search</div>
+        <div class="algo-desc">Each step eliminates half the remaining options. Requires sorted data.</div>
+        <div class="algo-code">Worst case: <strong style="color:var(--teal);">log₂(N) steps</strong><br><span style="font-size:11px;">16 cards → up to 4 · 70 cards → up to 7</span></div>
+      </div>
+    </div>
 
-            // --- Manejar intento ---
-            function handleGuess() {
-                if (rondaTerminada || autoLinearActive) return;
+    <div class="card card-teal" style="margin-bottom:1.25rem;">
+      <p style="font-size:14px;color:var(--teal);line-height:1.7;">With 16 cards, binary search needs at most <strong>4 steps</strong> (2⁴ = 16). With 70 cards, just <strong>7 steps</strong> (2⁷ = 128 > 70). With 1,000,000 elements only <strong>20 steps</strong> (2²⁰ ≈ 1,000,000). How many steps would linear search need in the worst case with a million elements?</p>
+    </div>
 
-                const rawValue = guessInput.value.trim();
-                if (rawValue === '') {
-                    feedbackMsgEl.textContent = '⚠️ Escribe un número.';
-                    feedbackMsgEl.className = 'feedback-message';
-                    return;
-                }
-                const guessed = parseInt(rawValue, 10);
-                if (isNaN(guessed)) {
-                    feedbackMsgEl.textContent = '⚠️ Solo se permiten números.';
-                    feedbackMsgEl.className = 'feedback-message';
-                    return;
-                }
+    <div class="card" id="finalchart" style="margin-bottom:1.5rem;"></div>
 
-                if (currentMode === 'lineal') {
-                    // MODO LINEAL REAL: solo SÍ/NO
-                    if (guessed < 1 || guessed > 100) {
-                        feedbackMsgEl.textContent = '⚠️ El número debe estar entre 1 y 100.';
-                        feedbackMsgEl.className = 'feedback-message';
-                        return;
-                    }
-                    if (checkedNumbers.has(guessed)) {
-                        feedbackMsgEl.textContent = `⚠️ Ya probaste el ${guessed}. Intenta con otro número.`;
-                        feedbackMsgEl.className = 'feedback-message';
-                        return;
-                    }
-                    intentosRonda++;
-                    intentosCountEl.textContent = intentosRonda;
-                    checkedNumbers.add(guessed);
-                    addLogEntry(`Intento ${intentosRonda}: ¿Es el ${guessed}? → ${guessed === secretNumber ? 'SÍ ✅' : 'NO ❌'}`,
-                        guessed === secretNumber ? 'hit' : 'attempt');
+    <button class="primary" id="submitBtn" style="display:none;" onclick="submitResults()">Send results to teacher →</button>
+    <div id="submitStatus" class="submit-status"></div>
 
-                    if (guessed === secretNumber) {
-                        updateProgressGrid(guessed, true);
-                        terminarRonda(true);
-                    } else {
-                        updateProgressGrid(guessed, false);
-                        feedbackMsgEl.textContent = `❌ No. El número NO es ${guessed}. Sigue probando.`;
-                        feedbackMsgEl.className = 'feedback-message feedback-no';
-                    }
-                } else {
-                    // MODO BINARIO: "¿Es mayor que X?"
-                    if (guessed < rangoMin || guessed > rangoMax) {
-                        feedbackMsgEl.textContent =
-                            `⚠️ El número debe estar entre ${rangoMin} y ${rangoMax} (rango actual).`;
-                        feedbackMsgEl.className = 'feedback-message';
-                        return;
-                    }
-                    intentosRonda++;
-                    intentosCountEl.textContent = intentosRonda;
+    <hr class="divider">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="ghost" onclick="restart()">↺ Play again</button>
+      <span style="font-size:13px;color:var(--muted);">Activity complete · wait for the teacher's instructions</span>
+    </div>
+  </div>
 
-                    const esMayor = secretNumber > guessed;
-                    if (esMayor) {
-                        feedbackMsgEl.textContent = `✅ Sí, es mayor que ${guessed}.`;
-                        feedbackMsgEl.className = 'feedback-message feedback-info';
-                        addLogEntry(`Pregunta ${intentosRonda}: ¿Es mayor que ${guessed}? → SÍ`, 'discard');
-                        rangoMin = guessed + 1;
-                        addLogEntry(`↳ Descartado 1–${guessed}. Nuevo rango: ${rangoMin}–${rangoMax}`, 'discard');
-                    } else {
-                        feedbackMsgEl.textContent = `❌ No, no es mayor que ${guessed}.`;
-                        feedbackMsgEl.className = 'feedback-message feedback-no';
-                        addLogEntry(`Pregunta ${intentosRonda}: ¿Es mayor que ${guessed}? → NO`, 'discard');
-                        rangoMax = guessed;
-                        addLogEntry(
-                            `↳ Descartado ${guessed+1}–${rangoMax > guessed ? rangoMax : ''}. Nuevo rango: ${rangoMin}–${rangoMax}`,
-                            'discard');
-                    }
-                    rangeDisplayEl.textContent = `${rangoMin} – ${rangoMax}`;
-                    rangeDisplayEl.classList.add('highlight');
-                    setTimeout(() => rangeDisplayEl.classList.remove('highlight'), 800);
-                    guessInput.min = rangoMin;
-                    guessInput.max = rangoMax;
+</div><!-- /wrap -->
 
-                    if (rangoMin === rangoMax) {
-                        feedbackMsgEl.textContent = `🎯 ¡Encontrado! El número es ${rangoMin}.`;
-                        feedbackMsgEl.className = 'feedback-message feedback-si';
-                        addLogEntry(`🏁 Rango reducido a un solo número: ${rangoMin}`, 'discard');
-                        secretNumber = rangoMin;
-                        terminarRonda(true);
-                        return;
-                    }
-                }
+<script>
+/* ─── Config ─────────────────────────────────────────────
+   Paste your Google Apps Script URL here (see instructions)
+─────────────────────────────────────────────────────────── */
+const SHEET_URL = 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 
-                guessInput.value = '';
-                guessInput.focus();
-            }
+/* ─── State ─── */
+const G = {
+  name:'', phase:1, round:1, cardCount:16,
+  cards:[], target:0, steps:0,
+  rev:[], elim:[], found:false,
+  res:{ p1:[], p1b:[], p2:[], p2b:[] }
+};
 
-            // --- Simulación automática de búsqueda lineal completa ---
-            function autoLinearSearch() {
-                if (rondaTerminada || autoLinearActive || currentMode !== 'lineal') return;
-                autoLinearActive = true;
-                guessInput.disabled = true;
-                guessBtn.disabled = true;
-                autoLinearBtn.disabled = true;
+/* ─── Helpers ─── */
+function goS(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
 
-                let current = 1;
-                // Buscar desde el último número no probado
-                if (checkedNumbers.size > 0) {
-                    current = Math.max(...checkedNumbers) + 1;
-                }
+function shuf(a) {
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
 
-                function step() {
-                    if (current > 100 || rondaTerminada) {
-                        autoLinearActive = false;
-                        if (!rondaTerminada) {
-                            feedbackMsgEl.textContent = '⚠️ Error: no se encontró el número (no debería ocurrir).';
-                            feedbackMsgEl.className = 'feedback-message';
-                        }
-                        return;
-                    }
-                    if (rondaTerminada) {
-                        autoLinearActive = false;
-                        return;
-                    }
-                    // Saltar números ya comprobados manualmente
-                    if (checkedNumbers.has(current)) {
-                        current++;
-                        setTimeout(step, 30);
-                        return;
-                    }
-                    intentosRonda++;
-                    intentosCountEl.textContent = intentosRonda;
-                    checkedNumbers.add(current);
-                    addLogEntry(`Intento ${intentosRonda}: ¿Es el ${current}? → ${current === secretNumber ? 'SÍ ✅' : 'NO ❌'}`,
-                        current === secretNumber ? 'hit' : 'attempt');
+function avg(a) {
+  if (!a.length) return '—';
+  return (a.reduce((x,y)=>x+y,0)/a.length).toFixed(1);
+}
 
-                    if (current === secretNumber) {
-                        updateProgressGrid(current, true);
-                        terminarRonda(true);
-                        autoLinearActive = false;
-                    } else {
-                        updateProgressGrid(current, false);
-                        feedbackMsgEl.textContent = `❌ No. El número NO es ${current}. Probando siguiente...`;
-                        feedbackMsgEl.className = 'feedback-message feedback-no';
-                        current++;
-                        setTimeout(step, 80); // Pequeña pausa para que se vea la animación
-                    }
-                }
-                step();
-            }
+function currentResult() {
+  if (G.phase===1 && G.cardCount===16)  return G.res.p1;
+  if (G.phase===1 && G.cardCount===70)  return G.res.p1b;
+  if (G.phase===2 && G.cardCount===16)  return G.res.p2;
+  return G.res.p2b;
+}
 
-            function terminarRonda(encontrado) {
-                rondaTerminada = true;
-                autoLinearActive = false;
-                stopTimer();
-                guessInput.disabled = true;
-                guessBtn.disabled = true;
-                autoLinearBtn.disabled = true;
+function startGame() {
+  const n = document.getElementById('nameInput').value.trim();
+  if (!n) {
+    document.getElementById('nameInput').focus();
+    document.getElementById('nameInput').style.borderColor = 'var(--amber)';
+    return;
+  }
+  G.name = n;
+  initP1();
+}
 
-                if (currentMode === 'lineal') {
-                    totalIntentosLineal += intentosRonda;
-                    rondaLinealCompletadas++;
-                    feedbackMsgEl.textContent = `🎉 ¡Correcto! El número era ${secretNumber}.`;
-                    feedbackMsgEl.className = 'feedback-message feedback-si';
-                } else {
-                    totalIntentosBinaria += intentosRonda;
-                    rondaBinariaCompletadas++;
-                    feedbackMsgEl.textContent = `🎉 ¡Encontrado! El número era ${secretNumber}.`;
-                    feedbackMsgEl.className = 'feedback-message feedback-si';
-                }
-                updateScoresDisplay();
+/* ─── Game setup ─── */
+function initP1() {
+  G.phase=1; G.cardCount=16; G.round=1;
+  G.res = { p1:[], p1b:[], p2:[], p2b:[] };
+  setupRound(); goS('s1');
+}
 
-                resultScoreEl.textContent = `${intentosRonda} intentos`;
-                resultMsgEl.textContent = `⏱️ Tiempo: ${formatTime(secondsElapsed)} | Número secreto: ${secretNumber}`;
-                resultScreen.classList.add('show');
-                gameArea.style.display = 'none';
-                guessArea.style.display = 'none';
-                autoLinearBtn.style.display = 'none';
+function initP1b() {
+  G.phase=1; G.cardCount=70; G.round=1; G.res.p1b=[];
+  setupRound(); goS('s1');
+}
 
-                const rondasCompletadas = currentMode === 'lineal' ? rondaLinealCompletadas : rondaBinariaCompletadas;
-                if (rondasCompletadas >= TOTAL_ROUNDS) {
-                    if (currentMode === 'lineal') {
-                        resultMsgEl.textContent +=
-                            ' | ✅ Completaste 5 rondas de Búsqueda Lineal. ¡Ahora prueba la Binaria!';
-                        newRoundBtn.textContent = '▶️ Empezar Búsqueda Binaria';
-                        newRoundBtn.onclick = () => cambiarModo('binaria');
-                    } else {
-                        resultMsgEl.textContent += ' | 🏁 ¡Juego terminado! Compara tus puntuaciones.';
-                        newRoundBtn.textContent = '🔄 Jugar de nuevo (reinicia todo)';
-                        newRoundBtn.onclick = reiniciarJuegoCompleto;
-                    }
-                } else {
-                    newRoundBtn.textContent = '▶️ Siguiente ronda';
-                    newRoundBtn.onclick = () => prepararNuevaRonda();
-                }
-            }
+function initP2() {
+  G.phase=2; G.cardCount=16; G.round=1; G.res.p2=[];
+  setupRound(); goS('s1');
+}
 
-            function cambiarModo(nuevoModo) {
-                stopTimer();
-                autoLinearActive = false;
-                currentMode = nuevoModo;
-                rangoMin = 1;
-                rangoMax = 100;
-                checkedNumbers = new Set();
-                if (nuevoModo === 'lineal') {
-                    btnLineal.classList.add('active');
-                    btnBinaria.classList.remove('active');
-                    rondaLinealCompletadas = 0;
-                    totalIntentosLineal = 0;
-                } else {
-                    btnBinaria.classList.add('active');
-                    btnLineal.classList.remove('active');
-                    rondaBinariaCompletadas = 0;
-                    totalIntentosBinaria = 0;
-                }
-                updateScoresDisplay();
-                prepararNuevaRonda();
-                resultScreen.classList.remove('show');
-                gameArea.style.display = 'flex';
-                guessArea.style.display = 'flex';
-                updateRondaDisplay();
-                newRoundBtn.textContent = '▶️ Siguiente ronda';
-                newRoundBtn.onclick = () => prepararNuevaRonda();
-            }
+function initP2b() {
+  G.phase=2; G.cardCount=70; G.round=1; G.res.p2b=[];
+  setupRound(); goS('s1');
+}
 
-            function reiniciarJuegoCompleto
+function setupRound() {
+  const N = G.cardCount;
+  G.cards = Array.from({length:N}, (_,i) => i+1);
+  if (G.phase === 1) shuf(G.cards);
+  G.target = G.cards[Math.floor(Math.random()*N)];
+  G.steps = 0;
+  G.rev   = new Array(N).fill(false);
+  G.elim  = new Array(N).fill(null);
+  G.found = false;
+
+  // Badge
+  const pb = document.getElementById('ph-badge');
+  if (G.phase === 1) {
+    pb.textContent = `Phase 1 · ${N} cards · no order`;
+    pb.className = 'badge badge-amber';
+  } else {
+    pb.textContent = `Phase 2 · ${N} cards · sorted`;
+    pb.className = 'badge badge-teal';
+  }
+
+  document.getElementById('tgt').textContent = G.target;
+  document.getElementById('stp').textContent = '0';
+  document.getElementById('rdone').style.display = 'none';
+  document.getElementById('phase2-hint').style.display = G.phase===2 ? 'block' : 'none';
+  setMsg('Click any card to start…', 'n');
+  renderDots(); renderCards();
+}
+
+/* ─── Dots ─── */
+function renderDots() {
+  const d = document.getElementById('dots');
+  const color = G.phase === 1 ? 'amber' : 'teal';
+  d.innerHTML = [1,2,3].map(i => {
+    let cls = 'dot';
+    if (i < G.round)  cls += ` done-${color}`;
+    else if (i===G.round) cls += ` active-${color}`;
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+/* ─── Cards ─── */
+function renderCards() {
+  const g = document.getElementById('grid');
+  const isSmall = G.cardCount === 70;
+  g.className = 'card-grid' + (isSmall ? ' small' : '');
+  const isPhase2 = G.phase === 2;
+
+  g.innerHTML = G.cards.map((val,i) => {
+    const isRev = G.rev[i];
+    const elim  = G.elim[i];
+    const canClick = !G.found && !isRev && !elim;
+
+    let backCls = 'face face-back';
+    if (!canClick) backCls += ' no-click';
+    if (elim==='lo') backCls += ' elim-lo';
+    if (elim==='hi') backCls += ' elim-hi';
+
+    let backContent = '';
+    if (elim==='lo')       backContent = `<span class="elim-arrow" style="color:var(--red-text);">↑</span>`;
+    else if (elim==='hi')  backContent = `<span class="elim-arrow" style="color:var(--teal);">↓</span>`;
+    else if (isPhase2)     backContent = `<span class="pos-label">#${i+1}</span><span class="q-mark">?</span>`;
+    else                   backContent = `<span class="q-mark">?</span>`;
+
+    const isTarget = isRev && val===G.target;
+    const frontCls = 'face face-front' + (isTarget?' is-target':'');
+    const numCls   = 'card-num' + (isTarget?' target-num':'');
+    const cardCls  = 'game-card' + (isRev?' flipped':'');
+    const clickFn  = canClick ? `onclick="clickCard(${i})"` : '';
+
+    return `<div class="${cardCls}" ${clickFn}>
+      <div class="game-card-inner">
+        <div class="${backCls}">${backContent}</div>
+        <div class="${frontCls}"><span class="${numCls}">${val}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─── Click ─── */
+function clickCard(i) {
+  if (G.found || G.rev[i] || G.elim[i]) return;
+  G.steps++;
+  G.rev[i] = true;
+  document.getElementById('stp').textContent = G.steps;
+  const val = G.cards[i];
+  const N   = G.cardCount;
+
+  if (val === G.target) {
+    G.found = true;
+    G.cards.forEach((_,j) => { if (!G.rev[j]) G.elim[j]='lo'; });
+    setMsg(`Found! The number ${val} was at position ${i+1}.`, 'found');
+    renderCards();
+    setTimeout(endRound, 600);
+  } else {
+    if (G.phase === 2) {
+      if (val < G.target) {
+        for (let j=0; j<=i; j++) { if (!G.rev[j]) G.elim[j]='lo'; }
+        setMsg(`Position ${i+1} → value ${val}. The number you're looking for is HIGHER. ↑ Cards to the left have been eliminated.`, 'higher');
+      } else {
+        for (let j=i; j<N; j++) { if (!G.rev[j]) G.elim[j]='hi'; }
+        setMsg(`Position ${i+1} → value ${val}. The number you're looking for is LOWER. ↓ Cards to the right have been eliminated.`, 'lower');
+      }
+    } else {
+      setMsg(`Card ${i+1} has ${val}. Keep looking!`, 'n');
+    }
+    renderCards();
+  }
+}
+
+/* ─── Message ─── */
+function setMsg(txt, type) {
+  const el = document.getElementById('msg');
+  el.textContent = txt;
+  el.className = 'msg-box' + (type!=='n' ? ' '+type : '');
+}
+
+/* ─── End round ─── */
+function endRound() {
+  const r = currentResult();
+  r.push(G.steps);
+
+  document.getElementById('rtxt').textContent =
+    `Round ${G.round}: found ${G.target} in ${G.steps} step${G.steps!==1?'s':''}.`;
+  document.getElementById('rlog').textContent =
+    `Recorded: [${r.join(', ')}]`;
+
+  const btn  = document.getElementById('nbtn');
+  const skip = document.getElementById('skipbtn');
+  skip.style.display = 'none';
+
+  if (G.round === 3) {
+    if (G.phase === 1 && G.cardCount === 16) {
+      btn.textContent = 'Continue to 70 cards →';
+      btn.onclick = () => {
+        document.getElementById('p1a_avg_hint').textContent = avg(G.res.p1);
+        goS('s1b');
+      };
+    } else if (G.phase === 1 && G.cardCount === 70) {
+      btn.textContent = 'See Phase 1 reflection →';
+      btn.onclick = () => { buildR1(); goS('s2'); };
+    } else if (G.phase === 2 && G.cardCount === 16) {
+      btn.textContent = 'Continue to 70 cards →';
+      btn.onclick = () => goS('s3b');
+    } else {
+      btn.textContent = 'See comparison →';
+      btn.onclick = () => { buildR2(); goS('s4'); };
+    }
+  } else {
+    btn.textContent = 'Next round →';
+    btn.onclick = () => { G.round++; setupRound(); };
+  }
+  btn.className = 'primary';
+  document.getElementById('rdone').style.display = 'block';
+}
+
+/* ─── Q&A blocks ─── */
+function buildQA(qs, cid) {
+  document.getElementById(cid).innerHTML = qs.map((q,i) => `
+    <div class="qa-block">
+      <div class="qa-q">${i+1}. ${q.q}</div>
+      <p class="qa-hint">✏️ Write your answer below before revealing the model answer.</p>
+      <textarea class="qa-input" placeholder="Your answer…" oninput="checkQA(this)"></textarea>
+      <button class="ghost" disabled onclick="revealA(this)">Show answer</button>
+      <div class="qa-a">${q.a}</div>
+    </div>`).join('');
+}
+
+function checkQA(ta) {
+  ta.nextElementSibling.disabled = ta.value.trim().length === 0;
+}
+
+function revealA(btn) {
+  const ta = btn.previousElementSibling;
+  if (ta && ta.classList.contains('qa-input')) ta.disabled = true;
+  btn.style.display = 'none';
+  btn.nextElementSibling.classList.add('show');
+}
+
+/* ─── Bars (normalized to 70 for visual comparison) ─── */
+function buildBars(r1, r1b, r2, r2b, cid) {
+  const MAX = 70;
+  const sec = txt => `<div class="bar-section-label">${txt}</div>`;
+  const row = (v, lbl, cls) => {
+    const w = Math.max(3, Math.round(v/MAX*100));
+    return `<div class="bar-row">
+      <span class="bar-label">${lbl}</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:${w}%;">${v}</div></div>
+    </div>`;
+  };
+
+  let h = `<p class="eyebrow" style="margin-bottom:8px;">Steps per round · bars scaled to 70</p><div>`;
+  h += sec('Phase 1 · Linear search · 16 cards');
+  r1.forEach((v,i)  => { h += row(v, `P1·16·R${i+1}`, 'amber'); });
+  h += sec('Phase 1 · Linear search · 70 cards');
+  r1b.forEach((v,i) => { h += row(v, `P1·70·R${i+1}`, 'amber'); });
+  h += sec('Phase 2 · Binary search · 16 cards');
+  r2.forEach((v,i)  => { h += row(v, `P2·16·R${i+1}`, 'teal'); });
+  h += sec('Phase 2 · Binary search · 70 cards');
+  r2b.forEach((v,i) => { h += row(v, `P2·70·R${i+1}`, 'teal'); });
+  h += '</div>';
+  document.getElementById(cid).innerHTML = h;
+}
+
+/* ─── Reflection 1 ─── */
+function buildR1() {
+  const r = G.res.p1, rb = G.res.p1b;
+
+  document.getElementById('r1avg').textContent = avg(r);
+  document.getElementById('r1res').innerHTML = r.map((v,i) =>
+    `<span style="padding:3px 10px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);border-radius:99px;font-size:12px;font-family:var(--mono);">R${i+1}: ${v}</span>`
+  ).join('');
+
+  document.getElementById('r1bavg').textContent = avg(rb);
+  document.getElementById('r1bres').innerHTML = rb.map((v,i) =>
+    `<span style="padding:3px 10px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);border-radius:99px;font-size:12px;font-family:var(--mono);">R${i+1}: ${v}</span>`
+  ).join('');
+
+  buildQA([
+    {q:'How many cards did you have to check in the worst case with 16 cards? And in the best case?',
+     a:'In the <strong>worst case</strong>, you had to check all 16 cards (the target was the very last one). In the <strong>best case</strong>, just 1. Everything depended on luck — there was no strategy that could improve your results when the data is unsorted.'},
+    {q:'How did you decide which card to flip at each moment?',
+     a:'Probably at random. Since the cards were shuffled, <strong>every choice was equally valid</strong>: there was no available information to help you pick any card over any other.'},
+    {q:'With 70 cards instead of 16, did your step count grow proportionally? Why?',
+     a:'Yes — with random cards and no strategy, on average you expect about N/2 steps, where N is the number of cards. So 16 cards → ~8 steps on average; 70 cards → ~35 steps. <strong>Linear search scales proportionally</strong> with the size of the dataset: double the data, double the work.'}
+  ], 'q1');
+}
+
+/* ─── Reflection 2 ─── */
+function buildR2() {
+  const r1=G.res.p1, r1b=G.res.p1b, r2=G.res.p2, r2b=G.res.p2b;
+  document.getElementById('avg1a').textContent = avg(r1);
+  document.getElementById('avg1b').textContent = avg(r1b);
+  document.getElementById('avg2a').textContent = avg(r2);
+  document.getElementById('avg2b').textContent = avg(r2b);
+  buildBars(r1, r1b, r2, r2b, 'bars4');
+  buildQA([
+    {q:'Why did you need fewer steps in Phase 2? What strategy did you follow without even realising it?',
+     a:'Each wrong guess gave you a hint (higher/lower) that let you <strong>eliminate half the remaining cards in one go</strong>. If you always picked the card at the centre of the active range, you halved the problem at every step — from 70 to 35, from 35 to 18, from 18 to 9… reaching any target in at most 7 steps.'},
+    {q:'Going from 16 to 70 cards, how much did Phase 2 change compared to Phase 1? What does that tell you?',
+     a:'Phase 1 roughly <em>quadrupled</em> in steps (16 → 70, so ×4.4). Phase 2 barely changed — from at most 4 steps to at most 7. <strong>Binary search scales with log₂(N)</strong>, so doubling the data adds just one extra step. Linear search scales with N itself — every extra card costs one extra step on average.'},
+    {q:'If there were 1,000,000 sorted cards, how many steps would binary search need at most?',
+     a:'Only <strong>20 steps</strong>, because 2²⁰ = 1,048,576. Linear search could need up to 1,000,000 steps. The difference grows astronomically the larger the dataset gets.'}
+  ], 'q2');
+}
+
+/* ─── Final screen ─── */
+function buildFinal() {
+  buildBars(G.res.p1, G.res.p1b, G.res.p2, G.res.p2b, 'finalchart');
+  document.querySelector('#nameFinal strong').textContent = G.name;
+  document.getElementById('nameFinal').style.display = 'inline-flex';
+  document.getElementById('submitStatus').className = 'submit-status';
+  document.getElementById('submitBtn').style.display = 'inline-block';
+}
+
+/* ─── Submit to Google Sheets ─── */
+async function submitResults() {
+  const btn = document.getElementById('submitBtn');
+  const status = document.getElementById('submitStatus');
+
+  if (SHEET_URL === 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    status.className = 'submit-status err';
+    status.textContent = 'Error: the teacher has not yet configured the Google Sheets URL.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  status.className = 'submit-status wait';
+  status.textContent = 'Sending results…';
+
+  const payload = {
+    name:        G.name,
+    timestamp:   new Date().toISOString(),
+    p1_16_r1:    G.res.p1[0]  || 0,
+    p1_16_r2:    G.res.p1[1]  || 0,
+    p1_16_r3:    G.res.p1[2]  || 0,
+    p1_16_avg:   parseFloat(avg(G.res.p1)),
+    p1_70_r1:    G.res.p1b[0] || 0,
+    p1_70_r2:    G.res.p1b[1] || 0,
+    p1_70_r3:    G.res.p1b[2] || 0,
+    p1_70_avg:   parseFloat(avg(G.res.p1b)),
+    p2_16_r1:    G.res.p2[0]  || 0,
+    p2_16_r2:    G.res.p2[1]  || 0,
+    p2_16_r3:    G.res.p2[2]  || 0,
+    p2_16_avg:   parseFloat(avg(G.res.p2)),
+    p2_70_r1:    G.res.p2b[0] || 0,
+    p2_70_r2:    G.res.p2b[1] || 0,
+    p2_70_r3:    G.res.p2b[2] || 0,
+    p2_70_avg:   parseFloat(avg(G.res.p2b)),
+  };
+
+  try {
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    status.className = 'submit-status ok';
+    status.textContent = '✓ Results sent successfully. Activity complete!';
+    btn.style.display = 'none';
+  } catch (e) {
+    status.className = 'submit-status err';
+    status.textContent = 'Error sending. Note down your results manually and tell the teacher.';
+    btn.disabled = false;
+    btn.textContent = 'Retry →';
+  }
+}
+
+/* ─── Restart ─── */
+function restart() {
+  G.res = { p1:[], p1b:[], p2:[], p2b:[] };
+  G.name = '';
+  G.cardCount = 16;
+  document.getElementById('nameInput').value = '';
+  goS('s0');
+}
+</script>
+</body>
+</html>
