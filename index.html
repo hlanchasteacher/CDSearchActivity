@@ -713,13 +713,13 @@
 
     <div class="card" id="finalchart" style="margin-bottom:1.5rem;"></div>
 
-    <button class="primary" id="submitBtn" style="display:none;" onclick="submitResults()">Send results to teacher →</button>
-    <div id="submitStatus" class="submit-status"></div>
+    <button class="primary" id="downloadBtn" onclick="downloadAnswers()">Download your answers →</button>
+    <div id="downloadStatus" class="submit-status"></div>
 
     <hr class="divider">
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
       <button class="ghost" onclick="restart()">↺ Play again</button>
-      <span style="font-size:13px;color:var(--muted);">Activity complete · wait for the teacher's instructions</span>
+      <span style="font-size:13px;color:var(--muted);">Activity complete · your answers will be saved as a text file</span>
     </div>
   </div>
 
@@ -727,9 +727,9 @@
 
 <script>
 /* ─── Config ─────────────────────────────────────────────
-   Paste your Google Apps Script URL here (see instructions)
+   Not used – the activity now downloads a text file.
 ─────────────────────────────────────────────────────────── */
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwfO4303xp7fEOp6IBCi8a6vB4oPHUXnFlo3T1eDceNcBwVtnZ8wNlnd9w3e7lkuEJRmA/exec';
+const SHEET_URL = '';  // kept for compatibility, not used
 
 /* ─── State ─── */
 const G = {
@@ -1049,63 +1049,79 @@ function buildFinal() {
   buildBars(G.res.p1, G.res.p1b, G.res.p2, G.res.p2b, 'finalchart');
   document.querySelector('#nameFinal strong').textContent = G.name;
   document.getElementById('nameFinal').style.display = 'inline-flex';
-  document.getElementById('submitStatus').className = 'submit-status';
-  document.getElementById('submitBtn').style.display = 'inline-block';
 }
 
-/* ─── Submit to Google Sheets ─── */
-async function submitResults() {
-  const btn = document.getElementById('submitBtn');
-  const status = document.getElementById('submitStatus');
+/* ─── Download answers as text file ─── */
+function downloadAnswers() {
+  const status = document.getElementById('downloadStatus');
 
-  if (SHEET_URL === 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-    status.className = 'submit-status err';
-    status.textContent = 'Error: the teacher has not yet configured the Google Sheets URL.';
-    return;
-  }
+  // Gather Q&A answers
+  const qaContainers = ['q1', 'q2'];
+  let qaText = '';
+  const sectionNames = { 'q1': 'Reflection – Phase 1', 'q2': 'Reflection – Comparison' };
 
-  btn.disabled = true;
-  btn.textContent = 'Sending…';
-  status.className = 'submit-status wait';
-  status.textContent = 'Sending results…';
+  qaContainers.forEach(cid => {
+    const container = document.getElementById(cid);
+    if (!container) return;
+    const blocks = container.querySelectorAll('.qa-block');
+    if (blocks.length === 0) return;
+    qaText += `\n=== ${sectionNames[cid]} ===\n`;
+    blocks.forEach((block, idx) => {
+      const questionEl = block.querySelector('.qa-q');
+      const answerEl = block.querySelector('.qa-input');
+      const modelEl = block.querySelector('.qa-a');
+      const question = questionEl ? questionEl.innerText.trim() : `Question ${idx+1}`;
+      const userAnswer = answerEl ? answerEl.value.trim() : '';
+      const modelAnswer = modelEl ? modelEl.innerText.trim() : '';
 
-  const payload = {
-    name:        G.name,
-    timestamp:   new Date().toISOString(),
-    p1_16_r1:    G.res.p1[0]  || 0,
-    p1_16_r2:    G.res.p1[1]  || 0,
-    p1_16_r3:    G.res.p1[2]  || 0,
-    p1_16_avg:   parseFloat(avg(G.res.p1)),
-    p1_70_r1:    G.res.p1b[0] || 0,
-    p1_70_r2:    G.res.p1b[1] || 0,
-    p1_70_r3:    G.res.p1b[2] || 0,
-    p1_70_avg:   parseFloat(avg(G.res.p1b)),
-    p2_16_r1:    G.res.p2[0]  || 0,
-    p2_16_r2:    G.res.p2[1]  || 0,
-    p2_16_r3:    G.res.p2[2]  || 0,
-    p2_16_avg:   parseFloat(avg(G.res.p2)),
-    p2_70_r1:    G.res.p2b[0] || 0,
-    p2_70_r2:    G.res.p2b[1] || 0,
-    p2_70_r3:    G.res.p2b[2] || 0,
-    p2_70_avg:   parseFloat(avg(G.res.p2b)),
-  };
-
-  try {
-    await fetch(SHEET_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      qaText += `\n${question}\n`;
+      qaText += `Your answer: ${userAnswer || '(no answer written)'}\n`;
+      qaText += `Model answer: ${modelAnswer || '(not available)'}\n`;
     });
-    status.className = 'submit-status ok';
-    status.textContent = '✓ Results sent successfully. Activity complete!';
-    btn.style.display = 'none';
-  } catch (e) {
-    status.className = 'submit-status err';
-    status.textContent = 'Error sending. Note down your results manually and tell the teacher.';
-    btn.disabled = false;
-    btn.textContent = 'Retry →';
-  }
+  });
+
+  // Build file content
+  const timestamp = new Date().toISOString();
+  const content = `Activity: Number Search – Pre‑class Activity
+Name: ${G.name || '(not provided)'}
+Finished on: ${timestamp}
+
+--- Game Results ---
+Phase 1 · 16 cards (shuffled):
+  Rounds: ${G.res.p1.join(', ') || 'not recorded'}
+  Average: ${avg(G.res.p1)}
+
+Phase 1 · 70 cards (shuffled):
+  Rounds: ${G.res.p1b.join(', ') || 'not recorded'}
+  Average: ${avg(G.res.p1b)}
+
+Phase 2 · 16 cards (sorted):
+  Rounds: ${G.res.p2.join(', ') || 'not recorded'}
+  Average: ${avg(G.res.p2)}
+
+Phase 2 · 70 cards (sorted):
+  Rounds: ${G.res.p2b.join(', ') || 'not recorded'}
+  Average: ${avg(G.res.p2b)}
+
+--- Your answers to the reflection questions ---${qaText}
+
+(You can re‑run the activity if you want to change your answers.)
+`;
+
+  // Create and trigger download
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `number-search-${G.name.replace(/\s+/g,'-') || 'student'}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Show success message
+  status.className = 'submit-status ok';
+  status.textContent = '✓ Answers downloaded! You can now share the file with your teacher.';
 }
 
 /* ─── Restart ─── */
@@ -1114,6 +1130,8 @@ function restart() {
   G.name = '';
   G.cardCount = 16;
   document.getElementById('nameInput').value = '';
+  document.getElementById('downloadStatus').className = 'submit-status';
+  document.getElementById('downloadStatus').textContent = '';
   goS('s0');
 }
 </script>
